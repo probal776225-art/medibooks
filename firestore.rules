@@ -1,0 +1,101 @@
+rules_version = '2';
+
+// Pharmacy Baki Khata — security rules (docs/ARCHITECTURE.md §3).
+// v1: one owner, UID hard-coded below. Replace the placeholder with your real UID before deploying.
+// The emulator seed creates a test owner with this exact UID, so local testing works as-is.
+// The Cloudflare Worker uses a service account and is not affected by these rules.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner() {
+      return request.auth != null && request.auth.uid in ['REPLACE_WITH_OWNER_UID'];
+    }
+
+    function onlyChanges(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    function unchanged(keys) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(keys);
+    }
+
+    match /shops/{shopId} {
+
+      match /settings/{settingsId} {
+        allow read, create, update: if isOwner();
+      }
+
+      match /customers/{mobile} {
+        function validCustomer() {
+          let d = request.resource.data;
+          return mobile.matches('^01[3-9][0-9]{8}$')
+            && d.mobile == mobile
+            && d.name is string && d.name.size() > 0 && d.name.size() <= 100
+            && d.totalDuePaisa is int;
+        }
+        allow read: if isOwner();
+        allow create: if isOwner() && validCustomer();
+        // Mobile can never change in place (change-mobile moves the doc in Phase 6).
+        // Keep update rules loose otherwise: a rejected offline batch would silently drop its transaction
+        // (e.g. two devices creating the same customer offline both send createdAt).
+        allow update: if isOwner() && validCustomer() && unchanged(['mobile']);
+        allow delete: if false;
+      }
+
+      // Append-only. Amounts never change; the only allowed edit is a one-time void.
+      match /transactions/{txnId} {
+        allow read: if isOwner();
+        allow create: if isOwner()
+          && request.resource.data.voided == false
+          && request.resource.data.effectPaisa is int;
+        allow update: if isOwner()
+          && resource.data.voided == false
+          && request.resource.data.voided == true
+          && request.resource.data.voidReason is string && request.resource.data.voidReason.size() > 0
+          && onlyChanges(['voided', 'voidedAt', 'voidedBy', 'voidReason']);
+        allow delete: if false;
+      }
+
+      // Never deleted; deactivate with status instead.
+      match /medicines/{medicineId} {
+        allow read, create, update: if isOwner();
+        allow delete: if false;
+      }
+
+      match /medicineImports/{importId} {
+        allow read, create, update: if isOwner();
+        allow delete: if false;
+      }
+
+      // Create-only logs.
+      match /auditLog/{entryId} {
+        allow read, create: if isOwner();
+        allow update, delete: if false;
+      }
+
+      match /medicinePriceHistory/{entryId} {
+        allow read, create: if isOwner();
+        allow update, delete: if false;
+      }
+
+      // Reference list (e.g. the MedEx file, used with written permission) packed into a few chunk docs.
+      // Not financial data: chunks of an old version are deleted when a new file is uploaded.
+      match /refCatalog/{source} {
+        allow read, create, update: if isOwner();
+        allow delete: if false;
+
+        match /chunks/{chunkId} {
+          allow read, create, update, delete: if isOwner();
+        }
+      }
+
+      // Phase 7 adds the retry rule; the Worker updates status with its service account.
+      match /smsQueue/{itemId} {
+        allow read, create: if isOwner();
+        allow update, delete: if false;
+      }
+
+      // members, portalLinks, stock*: reserved, closed until their phase.
+    }
+  }
+}

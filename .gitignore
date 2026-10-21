@@ -1,0 +1,26 @@
+# dependencies / builds
+node_modules/
+dist/
+dev-dist/
+coverage/
+.wrangler/
+
+# secrets
+.env*
+!.env.example
+*service-account*.json
+
+# owner's import files (supplier lists, licensed exports) — never committed
+data/imports/*
+!data/imports/.gitkeep
+
+# OS / editor
+.DS_Store
+*.log
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# Firebase emulator data (local test data)
+.emulator-data/
+ui-debug.log
