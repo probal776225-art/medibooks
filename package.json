@@ -5,7 +5,8 @@
   "scripts": {
     "emulators": "mkdir -p .emulator-data && PATH=\"$(brew --prefix openjdk@21 2>/dev/null)/bin:$PATH\" firebase emulators:start --only auth,firestore --project demo-baki --import=.emulator-data --export-on-exit=.emulator-data",
     "seed": "npm --prefix web run seed",
-    "test:rules": "PATH=\"$(brew --prefix openjdk@21 2>/dev/null)/bin:$PATH\" firebase emulators:exec --project demo-baki --only firestore \"npm --prefix web run test:rules\""
+    "test:rules": "PATH=\"$(brew --prefix openjdk@21 2>/dev/null)/bin:$PATH\" firebase emulators:exec --project demo-baki --only firestore \"npm --prefix web run test:rules\"",
+    "deploy": "node scripts/deploy.mjs"
   },
   "devDependencies": {
     "firebase-tools": "~15.33.0"

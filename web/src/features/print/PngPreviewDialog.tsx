@@ -1,7 +1,7 @@
 // Shows the generated PNG first, then lets the owner share it (WhatsApp etc.) or save it.
 import { useEffect, useState, type ReactElement } from 'react'
 import { Button, Modal } from '../../components/ui'
-import { canShareFile, downloadFile, renderToPng, shareFile } from '../../lib/png'
+import { canShareFile, downloadFile, shareFile } from '../../lib/share'
 import { useT } from '../../i18n'
 
 export function PngPreviewDialog({
@@ -24,7 +24,8 @@ export function PngPreviewDialog({
   useEffect(() => {
     let alive = true
     let objectUrl: string | null = null
-    renderToPng(image)
+    import('../../lib/png')
+      .then(({ renderToPng }) => renderToPng(image))
       .then((blob) => {
         if (!alive) return
         const f = new File([blob], fileName, { type: 'image/png' })

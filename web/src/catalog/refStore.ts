@@ -11,7 +11,6 @@ import { medicineKey } from '../domain/medicines'
 import { carryRefPrices, hasRefPrice } from './import/medexPrices'
 import { mapMedexSheets, type MedexParseResult, type RefMedicine } from './import/medexRef'
 import { packRefCatalog, sha256Hex, unpackRefCatalog } from './import/refPack'
-import { readXlsx } from './import/xlsx'
 
 type RefIndex = MiniSearch<RefMedicine>
 
@@ -137,6 +136,8 @@ export interface RefImportPreview {
 /** Read the owner's .xlsx in the browser (no upload yet) and show what is inside. */
 export async function previewRefFile(file: File): Promise<RefImportPreview> {
   const buf = await file.arrayBuffer()
+  // The .xlsx reader is only needed here, so it loads on demand.
+  const { readXlsx } = await import('./import/xlsx')
   const [sheets, sha256] = await Promise.all([readXlsx(buf, (name) => /brand/i.test(name)), sha256Hex(buf)])
   return { file, parsed: mapMedexSheets(sheets), sha256 }
 }

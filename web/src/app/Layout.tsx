@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Icon } from '../components/Icon'
 import { useT } from '../i18n'
@@ -121,6 +122,7 @@ function BottomNav() {
 }
 
 export function Layout() {
+  const t = useT()
   useShortcuts()
   return (
     <div className="flex min-h-dvh flex-col bg-slate-50 text-slate-900">
@@ -128,7 +130,9 @@ export function Layout() {
       <div className="flex flex-1">
         <Sidebar />
         <main className="min-w-0 flex-1 px-4 pt-4 pb-28 md:px-8 md:pb-8">
-          <Outlet />
+          <Suspense fallback={<p className="py-10 text-center text-slate-500">{t('app.loading')}</p>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
       <BottomNav />

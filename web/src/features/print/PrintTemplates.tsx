@@ -10,7 +10,7 @@ import { useFormat } from '../../i18n/format'
 import { unitText } from '../../i18n/units'
 import { useDataStore } from '../../stores/data'
 import { useUiStore } from '../../stores/ui'
-import { PRINT_WIDTH } from '../../lib/png'
+import { PRINT_WIDTH } from '../../lib/printWidth'
 
 function Frame({ children }: { children: ReactNode }) {
   const shop = useDataStore((s) => s.settings.shop)

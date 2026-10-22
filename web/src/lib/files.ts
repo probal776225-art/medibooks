@@ -1,5 +1,5 @@
 // Small browser file helpers for imports and backups.
-import Papa from 'papaparse'
+import type { ParseResult } from 'papaparse'
 
 /** Save text as a file. CSVs get a UTF-8 BOM so Excel shows Bangla correctly. */
 export function downloadText(fileName: string, text: string): void {
@@ -15,8 +15,9 @@ export function downloadText(fileName: string, text: string): void {
 
 /** Parse a CSV file with a header row; every value is a string. */
 export async function readCsv(file: File): Promise<Record<string, string>[]> {
-  const text = (await file.text()).replace(/^﻿/, '')
-  const result = Papa.parse<Record<string, string>>(text, { header: true, skipEmptyLines: 'greedy' })
+  const [{ default: Papa }, raw] = await Promise.all([import('papaparse'), file.text()])
+  const text = raw.replace(/^﻿/, '')
+  const result: ParseResult<Record<string, string>> = Papa.parse<Record<string, string>>(text, { header: true, skipEmptyLines: 'greedy' })
   if (result.errors.some((e) => e.type === 'Delimiter') && result.data.length === 0) throw new Error('Not a CSV file')
   return result.data
 }

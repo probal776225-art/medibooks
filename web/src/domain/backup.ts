@@ -3,6 +3,7 @@
 import { csvLine, taka } from './reports'
 import type { Customer, Millis, Paisa } from './types'
 
+/** Format id inside every backup file (kept from the app's first name so older files still restore). */
 export const BACKUP_APP = 'baki-khata'
 export const BACKUP_FORMAT = 1
 

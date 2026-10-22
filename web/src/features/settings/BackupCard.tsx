@@ -164,8 +164,8 @@ export function BackupCard() {
         setBusy(t('backup.reading', { count: readSoFar }))
       })
       const day = inDhaka(backup.exportedAt).format('YYYY-MM-DD')
-      downloadText(`baki-backup-${day}.json`, JSON.stringify(backup))
-      downloadText(`baki-customers-${day}.csv`, customersCsv(customers, (ms) => inDhaka(ms).format('YYYY-MM-DD')))
+      downloadText(`medibooks-backup-${day}.json`, JSON.stringify(backup))
+      downloadText(`medibooks-customers-${day}.csv`, customersCsv(customers, (ms) => inDhaka(ms).format('YYYY-MM-DD')))
       commitInBackground(recordBackupExported(backup))
       setMessage({
         kind: 'ok',

@@ -1,6 +1,6 @@
 // Bangla (default). Every UI string lives here and in en.ts with the same keys.
 export const bn = {
-  'app.name': 'বাকি খাতা',
+  'app.name': 'MediBooks',
   'app.shop': 'M/S ALLOPATHIC STORE & SURGICAL',
   'app.loading': 'লোড হচ্ছে…',
 
@@ -525,7 +525,7 @@ export const bn = {
   'backup.restoreIntro': 'রিস্টোর শুধু খালি ডাটাবেসে (যেমন নতুন Firebase প্রজেক্টে) করা যায়। এখনকার কোনো হিসাব মুছবে না বা বদলাবে না।',
   'backup.chooseFile': 'ব্যাকআপ ফাইল (.json) বেছে নিন',
   'backup.problem.notJson': 'এটা JSON ফাইল না।',
-  'backup.problem.notBackup': 'এটা বাকি খাতার ব্যাকআপ ফাইল না।',
+  'backup.problem.notBackup': 'এটা MediBooks-এর ব্যাকআপ ফাইল না।',
   'backup.problem.newerFormat': 'এই ব্যাকআপ অ্যাপের নতুন ভার্সনে বানানো। আগে অ্যাপ আপডেট করুন।',
   'backup.problem.otherShop': 'এই ব্যাকআপ অন্য দোকানের।',
   'backup.problem.broken': 'ফাইলটা ভাঙা বা অসম্পূর্ণ।',

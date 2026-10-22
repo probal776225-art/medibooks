@@ -1,13 +1,14 @@
-# Pharmacy Baki Khata — Project Guide for Claude
+# MediBooks — Project Guide for Claude
 
 ## What this is
-An offline-first PWA for **M/S ALLOPATHIC STORE & SURGICAL** (R.K Mission Road, Sreemangal, 01711460114) to track customer dues (বাকি).
+**MediBooks** (renamed from "বাকি খাতা" / Baki Khata on 2026-10-22): an offline-first PWA for **M/S ALLOPATHIC STORE & SURGICAL** (R.K Mission Road, Sreemangal, 01711460114) to track customer dues (বাকি).
+Naming in the UI: app name "MediBooks" in both languages; Bangla keeps **বাকি**; English says **Due** (never "baki"), and the sale screen is **New Invoice**. Internal ids (repo/folder names, `baki.*` storage keys, Dexie `baki-local-*`, backup format id `baki-khata`) stay as they are so existing data keeps working.
 Single owner, non-commercial, used on PC + mobile. Main goal: never lose track of baki, and the customer gets an SMS on every baki/joma.
 
 - **Design (source of truth): `docs/ARCHITECTURE.md`** — schema, offline strategy, medicine master-data, import pipeline, money rules, phases.
 - Screens and behaviour: `docs/SPEC.md` — read the section for the current phase before coding.
 - Build plan: `docs/PROMPTS.md` — one phase at a time.
-- Architecture status: **approved 2026-10-22.** Phases 1–6 done (skeleton + domain core; Firebase, login, customers; medicine master + offline search + MedEx reference list; New Baki sale screen; payment, ledger, void, balance check; opening-balance + supplier CSV imports, change mobile), Phase 9 (dashboard + reports), Phase 10 (memo / statement / report PNG + share) and Phase 11 (PIN lock, JSON backup + restore into an empty shop, settings). Phase 7 (SMS) waits for the provider's API docs; next options: Phase 8 (reminders) or 12 (QA + deploy + runbook).
+- Architecture status: **approved 2026-10-22.** Phases 1–6 done (skeleton + domain core; Firebase, login, customers; medicine master + offline search + MedEx reference list; New Baki sale screen; payment, ledger, void, balance check; opening-balance + supplier CSV imports, change mobile), Phase 9 (dashboard + reports), Phase 10 (memo / statement / report PNG + share) and Phase 11 (PIN lock, JSON backup + restore into an empty shop, settings). Phase 12: QA notes (`docs/QA.md`), owner runbook (`docs/RUNBOOK.md`), and **deployed 2026-10-22 to https://baki-khata-d7304.web.app** (Firebase project `baki-khata-d7304`, Spark; Firestore (default) Native; owner UID in the deployed rules). Waiting on the owner's phone/PC pilot checks. Phase 7 (SMS) waits for the provider's API docs; Phase 8 (reminders) is next.
 - `~/Claude/MedEx_Medicine_Directory.xlsx` (owner-supplied, 26,506 brands, no prices): owner confirmed MedEx's written permission on 2026-10-22; it is imported through Settings → ইমপোর্ট as the reference list — see ARCHITECTURE §0 and §3. Never copy this file into the repo or `web/public`.
 - MedEx price CSV (owner-supplied, e.g. `medex_medicines_partial.csv`: 3,392 brands, 3,389 with prices — 13% of the list): imported through Settings → ইমপোর্ট → MedEx দামের ফাইল; prices go onto the reference list and the source prices of matching shop medicines. A fuller file is imported the same way later. Same rule: never copy it into the repo or `web/public`.
 
@@ -72,11 +73,13 @@ Full schema in `docs/ARCHITECTURE.md` §3 (Firestore under `shops/main/`, Dexie 
 npm run emulators                   # auth + firestore emulators, project demo-baki, data kept in .emulator-data/
 npm run seed                        # (emulators running) wipe + seed test owner and 30 customers; prints the test login
 npm run test:rules                  # security rules tests on a throwaway emulator
+npm run deploy                      # REAL project: checks web/.env.deploy.local, builds --mode deploy, deploys hosting + rules (owner UID filled in) + indexes
+npm run deploy -- --only hosting    # app only
 # web/
 npm run dev | build | test | lint   # web/.env.local points the app at the emulator
-cd worker && npx wrangler dev | deploy
-npx firebase deploy --only hosting,firestore:rules,firestore:indexes
+cd worker && npx wrangler dev | deploy   # Phase 7 (SMS); not deployed yet
 ```
+`firestore.rules` keeps the emulator placeholder UID; `npm run deploy` writes a copy with `OWNER_UID` from `web/.env.deploy.local` to `.deploy/` (gitignored) and deploys with `firebase.deploy.json`. Never run a plain `firebase deploy` (it would ship the placeholder rules). Owner-facing steps: `docs/RUNBOOK.md`; QA status: `docs/QA.md`.
 During development use the Firebase emulator (`demo-baki` project, no real Firebase needed), not the real project, to protect the free quota. Restarting the auth emulator invalidates old sign-ins (TOKEN_EXPIRED) — just sign in again.
 
 ## Working style

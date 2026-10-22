@@ -1,4 +1,4 @@
-# Claude Code Build Plan — Pharmacy Baki Khata
+# Claude Code Build Plan — MediBooks (was Pharmacy Baki Khata)
 
 ## Kivabe use korba (porte 2 minute)
 1. Prottek phase er prompt **copy → Claude Code e paste**. Ekbare ekta phase.

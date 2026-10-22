@@ -1,4 +1,6 @@
-# Feature Spec — Pharmacy Baki Khata v1
+# Feature Spec — MediBooks v1 (pharmacy due book)
+
+App name: **MediBooks** (renamed from "বাকি খাতা" on 2026-10-22). Bangla UI keeps the word **বাকি**; English UI says **Due**, and the sale screen is **New Invoice** (নতুন বাকি in Bangla).
 
 Shop: **M/S ALLOPATHIC STORE & SURGICAL**, R.K Mission Road, Sreemangal, 01711460114
 Users: 1 owner (pilot). Devices: PC (Chrome, installed as app) + Android phone (installed PWA).

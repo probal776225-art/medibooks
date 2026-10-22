@@ -1,11 +1,14 @@
 // Turn a React element into a PNG (SPEC §11): 576 px wide (80 mm thermal printer width), pixel ratio 2, white.
+// Loaded on demand (dynamic import) so html-to-image is not in the start-up bundle.
 // html-to-image draws through the browser's own text engine, so Bangla conjuncts come out right (html2canvas does not).
 import { getFontEmbedCSS, toPng } from 'html-to-image'
 import type { ReactElement } from 'react'
 import { flushSync } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 
-export const PRINT_WIDTH = 576
+import { PRINT_WIDTH } from './printWidth'
+
+export { PRINT_WIDTH }
 
 /** The @font-face CSS (Hind Siliguri, as data URLs) is built once per session; it is the slow part. */
 let fontCss: Promise<string> | null = null
@@ -38,27 +41,4 @@ export async function renderToPng(element: ReactElement): Promise<Blob> {
     root.unmount()
     host.remove()
   }
-}
-
-export function canShareFile(file: File): boolean {
-  return typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })
-}
-
-/** Share sheet where the device supports sharing files (Android → WhatsApp etc.); otherwise a normal download. */
-export async function shareFile(file: File, title: string): Promise<'shared' | 'cancelled' | 'failed'> {
-  try {
-    await navigator.share({ files: [file], title })
-    return 'shared'
-  } catch (e) {
-    return e instanceof DOMException && e.name === 'AbortError' ? 'cancelled' : 'failed'
-  }
-}
-
-export function downloadFile(file: File): void {
-  const url = URL.createObjectURL(file)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = file.name
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }

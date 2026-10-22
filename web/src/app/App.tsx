@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { lazy, useEffect, useRef } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { startCatalog, stopCatalog } from '../catalog/store'
 import { PlaceholderPage } from '../components/PlaceholderPage'
@@ -9,22 +9,24 @@ import { CustomersPage } from '../features/customers/CustomersPage'
 import { NewCustomerPage } from '../features/customers/NewCustomerPage'
 import { HomePage } from '../features/home/HomePage'
 import { LockScreen } from '../features/lock/LockScreen'
-import { ImportsPage } from '../features/imports/ImportsPage'
-import { MedicineImportPage } from '../features/imports/MedicineImportPage'
-import { OpeningImportPage } from '../features/imports/OpeningImportPage'
 import { MedicineDetailPage } from '../features/medicines/MedicineDetailPage'
 import { MedicinesPage } from '../features/medicines/MedicinesPage'
 import { MorePage } from '../features/more/MorePage'
 import { PaymentPage } from '../features/payment/PaymentPage'
-import { ReportsPage } from '../features/reports/ReportsPage'
 import { NewSalePage } from '../features/sale/NewSalePage'
-import { SettingsPage } from '../features/settings/SettingsPage'
 import { useHtmlLang, useT } from '../i18n'
 import { initAuth, useAuthStore } from '../stores/auth'
 import { startSessionData, stopSessionData } from '../stores/data'
 import { startIdleWatch, unlockAfterLogin, useLockStore } from '../stores/lock'
 import { Layout } from './Layout'
 import { NAV, ROUTES } from './routes'
+
+// Screens used now and then load on demand (still precached by the service worker, so they open offline).
+const ImportsPage = lazy(() => import('../features/imports/ImportsPage').then((m) => ({ default: m.ImportsPage })))
+const MedicineImportPage = lazy(() => import('../features/imports/MedicineImportPage').then((m) => ({ default: m.MedicineImportPage })))
+const OpeningImportPage = lazy(() => import('../features/imports/OpeningImportPage').then((m) => ({ default: m.OpeningImportPage })))
+const ReportsPage = lazy(() => import('../features/reports/ReportsPage').then((m) => ({ default: m.ReportsPage })))
+const SettingsPage = lazy(() => import('../features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 
 const placeholderRoutes = (['reminders', 'smsLog'] as const).map(
   (id) => ({ path: ROUTES[id], element: <PlaceholderPage item={NAV[id]} /> }),
