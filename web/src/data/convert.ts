@@ -2,11 +2,16 @@
 import { Timestamp, type DocumentData } from 'firebase/firestore'
 import {
   SCHEMA_VERSION,
+  type BillDiscount,
   type Customer,
   type Medicine,
   type MedicineStatus,
   type Millis,
+  type PaymentMethod,
+  type SaleLine,
   type SourceName,
+  type Transaction,
+  type TxnType,
 } from '../domain/types'
 
 export function toMillis(v: unknown): Millis | null {
@@ -74,6 +79,45 @@ export function medicineFromDoc(id: string, d: DocumentData): Medicine {
     createdAt: toMillis(d.createdAt) ?? 0,
     createdBy: str(d.createdBy),
     updatedAt: toMillis(d.updatedAt),
+    schemaVersion: SCHEMA_VERSION,
+  }
+}
+
+const TXN_TYPES: readonly TxnType[] = ['sale', 'payment', 'opening', 'adjustment']
+const METHODS: readonly PaymentMethod[] = ['cash', 'card', 'bkash', 'nagad']
+
+export function transactionFromDoc(id: string, d: DocumentData): Transaction {
+  const discount = (d.billDiscount ?? {}) as Partial<BillDiscount>
+  return {
+    id,
+    customerId: str(d.customerId),
+    customerName: str(d.customerName),
+    type: TXN_TYPES.includes(d.type) ? d.type : 'adjustment',
+    memoNo: str(d.memoNo),
+    mode: d.mode === 'items' || d.mode === 'amount' ? d.mode : null,
+    lines: Array.isArray(d.lines) ? (d.lines as SaleLine[]) : [],
+    subtotalPaisa: int(d.subtotalPaisa),
+    billDiscount: {
+      type: discount.type === 'percent' || discount.type === 'flat' ? discount.type : 'none',
+      value: int(discount.value),
+    },
+    billDiscountPaisa: int(d.billDiscountPaisa),
+    roundOffPaisa: int(d.roundOffPaisa),
+    netPaisa: int(d.netPaisa),
+    paidNowPaisa: int(d.paidNowPaisa),
+    paymentMethod: METHODS.includes(d.paymentMethod) ? d.paymentMethod : null,
+    trxId: str(d.trxId),
+    effectPaisa: int(d.effectPaisa),
+    memoPrevDuePaisa: intOrNull(d.memoPrevDuePaisa),
+    note: str(d.note),
+    deviceId: str(d.deviceId),
+    createdAt: toMillis(d.createdAt) ?? 0,
+    createdBy: str(d.createdBy),
+    serverAt: toMillis(d.serverAt),
+    voided: d.voided === true,
+    voidedAt: toMillis(d.voidedAt),
+    voidedBy: strOrNull(d.voidedBy),
+    voidReason: str(d.voidReason),
     schemaVersion: SCHEMA_VERSION,
   }
 }

@@ -9,6 +9,7 @@ import { useFormat } from '../../i18n/format'
 import { useDataStore } from '../../stores/data'
 import { useToastStore } from '../../stores/toast'
 import { CustomerForm } from './CustomerForm'
+import { CustomerLedger } from './CustomerLedger'
 import { CustomerSummary } from './CustomerSummary'
 
 export function CustomerDetailPage() {
@@ -95,10 +96,7 @@ export function CustomerDetailPage() {
         />
       </Card>
 
-      <Card>
-        <h2 className="font-semibold">{t('customer.ledger')}</h2>
-        <p className="mt-1 text-slate-500">{t('customer.ledgerSoon')}</p>
-      </Card>
+      <CustomerLedger customer={customer} />
 
       <Button
         variant="ghost"

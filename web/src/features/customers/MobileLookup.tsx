@@ -17,9 +17,11 @@ interface Props {
   /** What to show once an existing customer is found. */
   renderFound: (c: Customer) => ReactNode
   onCreated: (mobile: string) => void
+  /** false = only existing customers (e.g. taking a payment). */
+  allowCreate?: boolean
 }
 
-export function MobileLookup({ initialMobile = '', renderFound, onCreated }: Props) {
+export function MobileLookup({ initialMobile = '', renderFound, onCreated, allowCreate = true }: Props) {
   const t = useT()
   const f = useFormat()
   const [raw, setRaw] = useState(initialMobile)
@@ -79,7 +81,11 @@ export function MobileLookup({ initialMobile = '', renderFound, onCreated }: Pro
 
       {mobile && found && renderFound(found)}
 
-      {mobile && !found && ready && (
+      {mobile && !found && ready && !allowCreate && (
+        <p className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900">{t('pay.noCustomer')}</p>
+      )}
+
+      {mobile && !found && ready && allowCreate && (
         <div className="rounded-2xl border border-teal-200 bg-teal-50/50 p-4">
           <p className="mb-3 font-semibold text-teal-800">{t('customer.notFound')}</p>
           <CustomerForm key={mobile} mode="create" mobile={mobile} onSaved={onCreated} />

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aging, checkBalance, expectedDue, runningBalance } from './ledger'
+import { aging, balancesFromNewest, checkBalance, expectedDue, findBalanceMismatches, runningBalance } from './ledger'
 
 const DAY = 86_400_000
 // 2026-10-22 12:00 Asia/Dhaka
@@ -52,5 +52,55 @@ describe('aging', () => {
     expect(aging({ totalDuePaisa: 100, lastPaymentAt: NOW - 61 * DAY, firstDueAt: null }, NOW).level).toBe('red')
     expect(aging({ totalDuePaisa: 0, lastPaymentAt: NOW - 90 * DAY, firstDueAt: null }, NOW).level).toBe('none')
     expect(aging({ totalDuePaisa: -500, lastPaymentAt: null, firstDueAt: null }, NOW).level).toBe('none')
+  })
+})
+
+describe('balancesFromNewest', () => {
+  it('walks back from the current due, skipping voided rows', () => {
+    const rows = balancesFromNewest(1500, [
+      { id: 'c', effectPaisa: -500, voided: false },
+      { id: 'b', effectPaisa: 700, voided: true },
+      { id: 'a', effectPaisa: 2000, voided: false },
+    ])
+    expect(rows.map((r) => [r.txn.id, r.balanceAfterPaisa])).toEqual([
+      ['c', 1500],
+      ['b', 2000],
+      ['a', 2000],
+    ])
+  })
+
+  it('agrees with runningBalance on the same data', () => {
+    const txns = [
+      { createdAt: 1, effectPaisa: 1000, voided: false },
+      { createdAt: 2, effectPaisa: -300, voided: false },
+      { createdAt: 3, effectPaisa: 999, voided: true },
+      { createdAt: 4, effectPaisa: 250, voided: false },
+    ]
+    const forward = runningBalance(txns).map((r) => r.balanceAfterPaisa)
+    const backward = balancesFromNewest(expectedDue(txns), [...txns].reverse())
+      .map((r) => r.balanceAfterPaisa)
+      .reverse()
+    expect(backward).toEqual(forward)
+  })
+})
+
+describe('findBalanceMismatches', () => {
+  it('finds customers whose stored due is off, including ones with no transactions', () => {
+    const customers = [
+      { mobile: '01711000001', name: 'A', totalDuePaisa: 700 },
+      { mobile: '01711000002', name: 'B', totalDuePaisa: 999 },
+      { mobile: '01711000003', name: 'C', totalDuePaisa: 50 },
+      { mobile: '01711000004', name: 'D', totalDuePaisa: 0 },
+    ]
+    const txns = [
+      { customerId: '01711000001', effectPaisa: 1000, voided: false },
+      { customerId: '01711000001', effectPaisa: -300, voided: false },
+      { customerId: '01711000002', effectPaisa: 500, voided: false },
+      { customerId: '01711000002', effectPaisa: 400, voided: true },
+    ]
+    expect(findBalanceMismatches(customers, txns)).toEqual([
+      { customerId: '01711000002', name: 'B', storedPaisa: 999, expectedPaisa: 500, diffPaisa: -499 },
+      { customerId: '01711000003', name: 'C', storedPaisa: 50, expectedPaisa: 0, diffPaisa: -50 },
+    ])
   })
 })

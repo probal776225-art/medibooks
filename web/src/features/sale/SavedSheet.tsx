@@ -6,20 +6,26 @@ import { useT } from '../../i18n'
 import { useFormat } from '../../i18n/format'
 import { useOnline } from '../../stores/sync'
 
-/** After save: what was recorded, and the next step. */
+/** After saving a bill or a payment: what was recorded, and the next step. */
 export function SavedSheet({ txn, onAnother, onClose }: { txn: TransactionDraft; onAnother: () => void; onClose: () => void }) {
   const t = useT()
   const f = useFormat()
   const online = useOnline()
   const totalAfter = (txn.memoPrevDuePaisa ?? 0) + txn.effectPaisa
-  const rows: [string, string][] = [
-    [t('sale.net'), f.money(txn.netPaisa)],
-    ...(txn.paidNowPaisa > 0 ? ([[t('sale.paidNow'), f.money(txn.paidNowPaisa)]] as [string, string][]) : []),
-    [t('sale.thisBill'), f.money(txn.effectPaisa)],
-    [t('sale.prevDue'), f.money(txn.memoPrevDuePaisa ?? 0)],
-  ]
+  const isPayment = txn.type === 'payment'
+  const rows: [string, string][] = isPayment
+    ? [
+        [t('pay.paid'), `${f.money(txn.paidNowPaisa)} (${txn.paymentMethod ? t(`method.${txn.paymentMethod}`) : ''})`],
+        [t('sale.prevDue'), f.money(txn.memoPrevDuePaisa ?? 0)],
+      ]
+    : [
+        [t('sale.net'), f.money(txn.netPaisa)],
+        ...(txn.paidNowPaisa > 0 ? ([[t('sale.paidNow'), f.money(txn.paidNowPaisa)]] as [string, string][]) : []),
+        [t('sale.thisBill'), f.money(txn.effectPaisa)],
+        [t('sale.prevDue'), f.money(txn.memoPrevDuePaisa ?? 0)],
+      ]
   return (
-    <Modal title={`✓ ${t('sale.saved')}`} onClose={onClose}>
+    <Modal title={`✓ ${t(isPayment ? 'pay.saved' : 'sale.saved')}`} onClose={onClose}>
       <p className="text-slate-600">
         {t('sale.memo')} <span className="font-mono">{txn.memoNo}</span> · {f.dateTime(txn.createdAt)}
       </p>
@@ -44,14 +50,16 @@ export function SavedSheet({ txn, onAnother, onClose }: { txn: TransactionDraft;
       </p>
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
         <Button onClick={onAnother} className="text-lg sm:col-span-2">
-          {t('sale.another')}
+          {t(isPayment ? 'pay.another' : 'sale.another')}
         </Button>
         <Link to={customerPath(txn.customerId)} onClick={onClose} className={buttonClass('outline')}>
           {t('sale.openCustomer')}
         </Link>
-        <Button variant="ghost" disabled className="border border-slate-200">
-          {t('sale.pngLater')}
-        </Button>
+        {!isPayment && (
+          <Button variant="ghost" disabled className="border border-slate-200">
+            {t('sale.pngLater')}
+          </Button>
+        )}
       </div>
     </Modal>
   )

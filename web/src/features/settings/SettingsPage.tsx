@@ -2,6 +2,7 @@ import { Button, Card } from '../../components/ui'
 import { useT } from '../../i18n'
 import { signOut, useAuthStore } from '../../stores/auth'
 import { useDataStore } from '../../stores/data'
+import { BalanceCheckCard } from './BalanceCheckCard'
 
 /** Phase 2: shop details (read-only) + sign out. The full settings screen comes in Phase 11. */
 export function SettingsPage() {
@@ -34,6 +35,8 @@ export function SettingsPage() {
           {t('settings.logout')}
         </Button>
       </Card>
+
+      <BalanceCheckCard />
 
       <p className="text-sm text-slate-500">{t('settings.more')}</p>
     </section>

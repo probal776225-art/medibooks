@@ -39,6 +39,44 @@ export function checkBalance(storedPaisa: Paisa, txns: readonly LedgerTxn[]): Ba
   return { storedPaisa, expectedPaisa, diffPaisa: expectedPaisa - storedPaisa }
 }
 
+/**
+ * The ledger is read newest-first, a page at a time. Walk back from the customer's current due:
+ * the newest row's balance-after is the current due; each older row is that minus the newer effects.
+ */
+export function balancesFromNewest<T extends Pick<Transaction, 'effectPaisa' | 'voided'>>(
+  currentDuePaisa: Paisa,
+  newestFirst: readonly T[],
+): { txn: T; balanceAfterPaisa: Paisa }[] {
+  let balance = currentDuePaisa
+  return newestFirst.map((txn) => {
+    const row = { txn, balanceAfterPaisa: balance }
+    if (!txn.voided) balance -= txn.effectPaisa
+    return row
+  })
+}
+
+export interface BalanceMismatch extends BalanceCheck {
+  customerId: string
+  name: string
+}
+
+/** ব্যালেন্স যাচাই: every customer whose stored due differs from the sum of their non-voided transactions. */
+export function findBalanceMismatches(
+  customers: readonly { mobile: string; name: string; totalDuePaisa: Paisa }[],
+  txns: readonly Pick<Transaction, 'customerId' | 'effectPaisa' | 'voided'>[],
+): BalanceMismatch[] {
+  const sums = new Map<string, Paisa>()
+  for (const t of txns) if (!t.voided) sums.set(t.customerId, (sums.get(t.customerId) ?? 0) + t.effectPaisa)
+  const out: BalanceMismatch[] = []
+  for (const c of customers) {
+    const expectedPaisa = sums.get(c.mobile) ?? 0
+    if (expectedPaisa !== c.totalDuePaisa) {
+      out.push({ customerId: c.mobile, name: c.name, storedPaisa: c.totalDuePaisa, expectedPaisa, diffPaisa: expectedPaisa - c.totalDuePaisa })
+    }
+  }
+  return out
+}
+
 export type AgingLevel = 'none' | 'green' | 'yellow' | 'red'
 
 /**

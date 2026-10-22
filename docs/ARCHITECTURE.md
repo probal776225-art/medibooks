@@ -340,6 +340,12 @@ All in `web/src/domain/`, pure functions, unit-tested (including property tests:
 - Memo numbers and mobile numbers are shown in English digits (easier to match on paper); amounts follow the Bangla/English digit setting.
 - Same medicine + unit added again increases the quantity instead of adding a row. An edited price can be kept as the shop price for that unit (logged in price history).
 
+**Implementation notes (Phase 5 — payment, ledger, void, balance check):**
+- Payment = `buildPayment()` + the same one-batch save (`effect = −amount`, `lastPaymentAt`). Paying more than the due asks once and leaves an advance (negative due).
+- Ledger reads newest first, 30 per page: the first page is a live listener (new sales/voids show at once, also offline), older pages load on demand. Running balance is walked back from the customer's current due (`balancesFromNewest`).
+- Void = one batch: `voided/voidedAt/voidedBy/voidReason` + `increment(−effect)` + audit. Voiding a sale cancels the whole bill, including any money marked "paid now" on it; if that money was really received, record it as a payment.
+- ব্যালেন্স যাচাই reads every transaction from the server (500 per page), compares Σ non-voided effects with each stored due, and repairs only with `increment(diff)` + an audit entry. It needs internet by design.
+
 ## 8. SMS integration strategy
 
 - **Only the Worker sends SMS** (API key never in the browser).
