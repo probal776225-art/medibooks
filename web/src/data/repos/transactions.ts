@@ -189,3 +189,11 @@ export async function fetchRange(start: number, end: number): Promise<{ txns: Tr
   const snap = await getDocs(rangeQuery(start, end))
   return { txns: snap.docs.map((d) => transactionFromDoc(d.id, d.data())), fromCache: snap.metadata.fromCache }
 }
+
+/** A customer's transactions since `start` (newest first) — for the statement. Offline it uses the cache. */
+export async function fetchCustomerSince(mobile: string, start: number): Promise<Transaction[]> {
+  const snap = await getDocs(
+    query(paths.transactions(), where('customerId', '==', mobile), where('createdAt', '>=', Timestamp.fromMillis(start)), orderBy('createdAt', 'desc')),
+  )
+  return snap.docs.map((d) => transactionFromDoc(d.id, d.data()))
+}

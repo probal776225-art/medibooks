@@ -22,6 +22,8 @@ import { downloadText } from '../../lib/files'
 import { useT, type MessageKey } from '../../i18n'
 import { useFormat } from '../../i18n/format'
 import { useDataStore } from '../../stores/data'
+import { PngPreviewDialog } from '../print/PngPreviewDialog'
+import { ReportImage } from '../print/PrintTemplates'
 
 type Choice = RangePreset | 'custom'
 const PRESETS: { id: Choice; label: MessageKey }[] = [
@@ -53,6 +55,7 @@ export function ReportsPage() {
   const [range, setRange] = useState<DateRange>(() => presetRange('today', Date.now()))
   const [badRange, setBadRange] = useState(false)
   const [data, setData] = useState<{ txns: Transaction[]; fromCache: boolean } | null>(null)
+  const [showImage, setShowImage] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -127,7 +130,7 @@ export function ReportsPage() {
         <Button variant="outline" disabled={!sum} onClick={exportCsv}>
           {t('rep.csv')}
         </Button>
-        <Button variant="ghost" disabled className="border border-slate-200">
+        <Button variant="ghost" disabled={!sum} className="border border-slate-200" onClick={() => setShowImage(true)}>
           {t('rep.png')}
         </Button>
       </div>
@@ -234,6 +237,14 @@ export function ReportsPage() {
           </ol>
         </Card>
       </div>
+      {showImage && sum && (
+        <PngPreviewDialog
+          title={t('nav.reports')}
+          fileName={`report-${new Date(range.start + 6 * 3_600_000).toISOString().slice(0, 10)}.png`}
+          image={<ReportImage rangeText={rangeText} sum={sum} newCount={newCount} market={market} buckets={buckets} top={top} />}
+          onClose={() => setShowImage(false)}
+        />
+      )}
     </section>
   )
 }

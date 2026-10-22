@@ -354,7 +354,14 @@ All in `web/src/domain/`, pure functions, unit-tested (including property tests:
 **Implementation notes (Phase 9 — dashboard + reports):**
 - Home: one live query for today's transactions (Dhaka day, re-subscribes after midnight) → আজ বাকি দিলাম (Σ net − paid now of bills), আজ জমা পেলাম (payments + money paid with bills), last 10. বাজারে মোট বাকি comes from the customer list already in memory. আজকের তাগাদা waits for Phase 8.
 - Reports: one `createdAt` range query per period (আজ, এই সপ্তাহ = Saturday–Friday, এই মাস, custom). Voided transactions are counted but excluded from totals. Aging buckets (0–30, 31–60, 61–90, 90+ days since last payment, else since added), top 10 and new customers use the in-memory customer list. Offline, the report says it is computed from this device's cache.
-- CSV export: UTF-8 with BOM, amounts in taka with two decimals and English digits so spreadsheets read them as numbers. PNG export comes with Phase 10; SMS counts with Phase 7.
+- CSV export: UTF-8 with BOM, amounts in taka with two decimals and English digits so spreadsheets read them as numbers. PNG export is Phase 10 (below); SMS counts with Phase 7.
+
+**Implementation notes (Phase 10 — PNG memo / statement / report + share):**
+- `lib/png.ts` renders a template off-screen (its own React root, 576 px) and turns it into a PNG with html-to-image (pixel ratio 2, white). The Hind Siliguri `@font-face` CSS is embedded once per session; fonts come from the precache, so it works offline. The owner always sees the image first, then **শেয়ার করুন** (`navigator.share({ files })`, shown only where the device can share files, e.g. Android Chrome → WhatsApp) or **ছবি সেভ করুন** (download).
+- Templates (`features/print/PrintTemplates.tsx`) read only the transaction snapshot (rule 5) and the shop header from settings: sale memo, payment receipt, opening/adjustment; a voided transaction gets a "বাতিল" watermark. Buttons: the sheet after save, and each row in লেনদেনের হিসাব.
+- Statement: এই মাস / গত মাস / সব সময়. One query (`customerId ==`, `createdAt >=` start, newest first — the existing composite index) fetches everything since the start; `domain/statement.ts` works backwards from the customer's current `totalDuePaisa` to get the opening balance, then lists the period with a running balance. Voided rows are left out (their effect is already reversed). Offline it uses the cache.
+- Report: the same numbers as the reports page for the chosen period, plus market total, aging and top 10.
+- File names: `memo-{memoNo}.png`, `statement-{mobile}-{YYYY-MM|all}.png`, `report-{YYYY-MM-DD}.png`.
 
 ## 8. SMS integration strategy
 

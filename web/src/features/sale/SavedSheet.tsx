@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { customerPath } from '../../app/routes'
 import { Button, buttonClass, Modal } from '../../components/ui'
@@ -5,6 +6,8 @@ import type { TransactionDraft } from '../../domain/types'
 import { useT } from '../../i18n'
 import { useFormat } from '../../i18n/format'
 import { useOnline } from '../../stores/sync'
+import { MemoImage } from '../print/PrintTemplates'
+import { PngPreviewDialog } from '../print/PngPreviewDialog'
 
 /** After saving a bill or a payment: what was recorded, and the next step. */
 export function SavedSheet({ txn, onAnother, onClose }: { txn: TransactionDraft; onAnother: () => void; onClose: () => void }) {
@@ -12,6 +15,7 @@ export function SavedSheet({ txn, onAnother, onClose }: { txn: TransactionDraft;
   const f = useFormat()
   const online = useOnline()
   const totalAfter = (txn.memoPrevDuePaisa ?? 0) + txn.effectPaisa
+  const [showImage, setShowImage] = useState(false)
   const isPayment = txn.type === 'payment'
   const rows: [string, string][] = isPayment
     ? [
@@ -55,12 +59,18 @@ export function SavedSheet({ txn, onAnother, onClose }: { txn: TransactionDraft;
         <Link to={customerPath(txn.customerId)} onClick={onClose} className={buttonClass('outline')}>
           {t('sale.openCustomer')}
         </Link>
-        {!isPayment && (
-          <Button variant="ghost" disabled className="border border-slate-200">
-            {t('sale.pngLater')}
-          </Button>
-        )}
+        <Button variant="ghost" className="border border-slate-200" onClick={() => setShowImage(true)}>
+          {t(isPayment ? 'print.receiptImage' : 'print.memoImage')}
+        </Button>
       </div>
+      {showImage && (
+        <PngPreviewDialog
+          title={t(isPayment ? 'print.receiptImage' : 'print.memoImage')}
+          fileName={`memo-${txn.memoNo}.png`}
+          image={<MemoImage txn={txn} />}
+          onClose={() => setShowImage(false)}
+        />
+      )}
     </Modal>
   )
 }

@@ -6,19 +6,16 @@ import { Button, Card, TextInput } from '../../components/ui'
 import { fetchLedgerPage, subscribeLedger, voidTransaction, type LedgerRowData } from '../../data/repos/transactions'
 import { balancesFromNewest } from '../../domain/ledger'
 import { formatBp } from '../../domain/money'
-import type { Customer, SaleLine, Transaction } from '../../domain/types'
+import type { Customer, Transaction } from '../../domain/types'
 import { useT, type MessageKey } from '../../i18n'
 import { errorKey, useFormat } from '../../i18n/format'
+import { unitText } from '../../i18n/units'
+import { MemoImage } from '../print/PrintTemplates'
+import { PngPreviewDialog } from '../print/PngPreviewDialog'
 import { useUiStore } from '../../stores/ui'
 import { useToastStore } from '../../stores/toast'
 
 const PAGE = 30
-
-function unitText(t: ReturnType<typeof useT>, l: SaleLine): string {
-  if (l.unit === 'custom') return l.unitLabel ?? ''
-  if (l.unit === 'piece') return t('sale.unitPiece')
-  return t(l.unit === 'strip' ? 'sale.unitStrip' : 'sale.unitPack', { n: l.piecesPerUnit ?? '' })
-}
 
 function Detail({ txn }: { txn: Transaction }) {
   const t = useT()
@@ -26,6 +23,7 @@ function Detail({ txn }: { txn: Transaction }) {
   const digits = useUiStore((s) => s.digits)
   const showToast = useToastStore((s) => s.show)
   const [voiding, setVoiding] = useState(false)
+  const [showImage, setShowImage] = useState(false)
   const [reason, setReason] = useState('')
   const [error, setError] = useState<MessageKey | null>(null)
 
@@ -83,6 +81,17 @@ function Detail({ txn }: { txn: Transaction }) {
         </p>
       )}
       {txn.note && <p className="text-slate-600 italic">{txn.note}</p>}
+      <Button variant="ghost" className="min-h-10 border border-slate-200 text-sm" onClick={() => setShowImage(true)}>
+        {t(txn.type === 'payment' ? 'print.receiptImage' : 'print.memoImage')}
+      </Button>
+      {showImage && (
+        <PngPreviewDialog
+          title={t(txn.type === 'payment' ? 'print.receiptImage' : 'print.memoImage')}
+          fileName={`memo-${txn.memoNo}.png`}
+          image={<MemoImage txn={txn} />}
+          onClose={() => setShowImage(false)}
+        />
+      )}
       {txn.voided ? (
         <p className="text-rose-700">{t('ledger.voidReasonShown', { reason: txn.voidReason })}</p>
       ) : voiding ? (

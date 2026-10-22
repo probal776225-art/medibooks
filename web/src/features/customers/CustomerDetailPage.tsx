@@ -12,6 +12,7 @@ import { ChangeMobileDialog } from './ChangeMobileDialog'
 import { CustomerForm } from './CustomerForm'
 import { CustomerLedger } from './CustomerLedger'
 import { CustomerSummary } from './CustomerSummary'
+import { StatementDialog } from '../print/StatementDialog'
 
 export function CustomerDetailPage() {
   const t = useT()
@@ -22,6 +23,7 @@ export function CustomerDetailPage() {
   const showToast = useToastStore((s) => s.show)
   const [editing, setEditing] = useState(false)
   const [changingMobile, setChangingMobile] = useState(false)
+  const [showStatement, setShowStatement] = useState(false)
 
   if (!customer) {
     return (
@@ -77,7 +79,7 @@ export function CustomerDetailPage() {
         <a href={`tel:${customer.mobile}`} className={buttonClass('outline', 'min-h-14')}>
           {t('customer.call')}
         </a>
-        <Button variant="ghost" disabled className="border border-slate-200">
+        <Button variant="ghost" className="border border-slate-200" onClick={() => setShowStatement(true)}>
           {t('customer.statement')}
         </Button>
         <Button variant="ghost" disabled className="border border-slate-200">
@@ -115,6 +117,7 @@ export function CustomerDetailPage() {
         </div>
       )}
       {changingMobile && <ChangeMobileDialog customer={customer} onClose={() => setChangingMobile(false)} />}
+      {showStatement && <StatementDialog customer={customer} onClose={() => setShowStatement(false)} />}
     </section>
   )
 }
