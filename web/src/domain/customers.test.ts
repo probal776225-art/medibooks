@@ -22,6 +22,7 @@ function c(over: Partial<Customer>): Customer {
     lastReminderAt: null,
     reminderMonth: null,
     reminderCountThisMonth: 0,
+    movedTo: null,
     createdAt: NOW - DAY,
     createdBy: 'owner',
     updatedAt: null,

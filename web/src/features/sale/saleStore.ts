@@ -28,7 +28,7 @@ useSaleStore.subscribe((s, prev) => {
 export async function loadSaleDraft(): Promise<void> {
   if (useSaleStore.getState().loaded) return
   const row = await localDb.drafts.get('sale').catch(() => undefined)
-  useSaleStore.setState({ draft: row ? { ...EMPTY_DRAFT, ...row.draft } : EMPTY_DRAFT, loaded: true })
+  useSaleStore.setState({ draft: row?.key === 'sale' ? { ...EMPTY_DRAFT, ...row.draft } : EMPTY_DRAFT, loaded: true })
 }
 
 export function patchDraft(patch: Partial<SaleDraft>): void {

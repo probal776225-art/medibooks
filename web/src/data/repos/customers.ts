@@ -1,4 +1,13 @@
-import { increment, onSnapshot, serverTimestamp, Timestamp, type Unsubscribe } from 'firebase/firestore'
+import {
+  getDocsFromServer,
+  increment,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  Timestamp,
+  where,
+  type Unsubscribe,
+} from 'firebase/firestore'
 import { cleanProfile, type CustomerProfile } from '../../domain/customers'
 import { DomainError } from '../../domain/errors'
 import { normalizeMobile } from '../../domain/phone'
@@ -92,4 +101,73 @@ export function setCustomerFlags(before: Customer, flags: CustomerFlags): void {
   for (const k of Object.keys(flags) as (keyof CustomerFlags)[]) prev[k] = before[k]
   auditInBatch(batch, { action: 'customer.flags', entity: 'customer', entityId: before.mobile, before: prev, after: flags }, ctx)
   commitInBackground(batch)
+}
+
+/**
+ * Move a customer to a new mobile number (SPEC §3). Needs internet: it must see every transaction on the server.
+ * Order: move the transactions first (batches of 400), then create the new record with the due and archive the old
+ * one (due moved out, `movedTo` set) in a final batch. Unlike normal saves this awaits the server, so the owner
+ * only sees "done" when it really is; if it stops halfway, running it again finishes the rest.
+ */
+export async function changeCustomerMobile(
+  c: Customer,
+  newMobileInput: string,
+  taken: (mobile: string) => boolean,
+  onProgress?: (moved: number, total: number) => void,
+): Promise<string> {
+  const newMobile = normalizeMobile(newMobileInput)
+  if (!newMobile) throw new DomainError('INVALID_MOBILE')
+  if (newMobile === c.mobile) throw new DomainError('SAME_MOBILE')
+  if (taken(newMobile)) throw new DomainError('MOBILE_TAKEN')
+  const ctx = writeContext()
+
+  const snap = await getDocsFromServer(query(paths.transactions(), where('customerId', '==', c.mobile)))
+  const docs = snap.docs
+  for (let i = 0; i < docs.length; i += 400) {
+    const batch = newBatch()
+    for (const d of docs.slice(i, i + 400)) batch.update(d.ref, { customerId: newMobile })
+    await batch.commit()
+    onProgress?.(Math.min(i + 400, docs.length), docs.length)
+  }
+
+  const batch = newBatch()
+  batch.set(paths.customer(newMobile), {
+    mobile: newMobile,
+    name: c.name,
+    address: c.address,
+    note: c.note,
+    totalDuePaisa: increment(c.totalDuePaisa),
+    smsEnabled: c.smsEnabled,
+    reminderEnabled: c.reminderEnabled,
+    archived: false,
+    lastTxnAt: c.lastTxnAt === null ? null : Timestamp.fromMillis(c.lastTxnAt),
+    lastPaymentAt: c.lastPaymentAt === null ? null : Timestamp.fromMillis(c.lastPaymentAt),
+    lastReminderAt: c.lastReminderAt === null ? null : Timestamp.fromMillis(c.lastReminderAt),
+    reminderMonth: c.reminderMonth,
+    reminderCountThisMonth: c.reminderCountThisMonth,
+    movedFrom: c.mobile,
+    createdAt: Timestamp.fromMillis(c.createdAt || ctx.now),
+    createdBy: c.createdBy || ctx.uid,
+    updatedAt: serverTimestamp(),
+    schemaVersion: SCHEMA_VERSION,
+  })
+  batch.update(paths.customer(c.mobile), {
+    archived: true,
+    movedTo: newMobile,
+    totalDuePaisa: increment(0 - c.totalDuePaisa),
+    updatedAt: serverTimestamp(),
+  })
+  auditInBatch(
+    batch,
+    {
+      action: 'customer.changeMobile',
+      entity: 'customer',
+      entityId: c.mobile,
+      before: { mobile: c.mobile, totalDuePaisa: c.totalDuePaisa },
+      after: { mobile: newMobile, transactionsMoved: docs.length },
+    },
+    ctx,
+  )
+  await batch.commit()
+  return newMobile
 }

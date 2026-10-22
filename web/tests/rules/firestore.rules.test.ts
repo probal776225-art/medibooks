@@ -109,6 +109,15 @@ describe('transactions', () => {
     await assertFails(setDoc(doc(owner(), `${SHOP}/transactions/t2`), { ...sale(), voided: true }))
   })
 
+  it('may move to a new mobile number, but only that field and only to a valid number', async () => {
+    await seed(`${SHOP}/transactions/t1`, sale())
+    const ref = doc(owner(), `${SHOP}/transactions/t1`)
+    await assertSucceeds(updateDoc(ref, { customerId: '01811111111' }))
+    await assertFails(updateDoc(ref, { customerId: '01911111111', netPaisa: 1 }))
+    await assertFails(updateDoc(ref, { customerId: 'not-a-mobile' }))
+    await assertFails(updateDoc(doc(stranger(), `${SHOP}/transactions/t1`), { customerId: '01911111111' }))
+  })
+
   it('allows one void with a reason', async () => {
     await seed(`${SHOP}/transactions/t1`, sale())
     const ref = doc(owner(), `${SHOP}/transactions/t1`)

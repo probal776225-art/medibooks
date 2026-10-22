@@ -42,17 +42,22 @@ service cloud.firestore {
         allow delete: if false;
       }
 
-      // Append-only. Amounts never change; the only allowed edit is a one-time void.
+      // Append-only. Amounts never change. Allowed edits: a one-time void, or moving the transaction to the
+      // customer's new mobile number (change-mobile, Phase 6) — nothing else in the same write.
       match /transactions/{txnId} {
         allow read: if isOwner();
         allow create: if isOwner()
           && request.resource.data.voided == false
           && request.resource.data.effectPaisa is int;
-        allow update: if isOwner()
-          && resource.data.voided == false
-          && request.resource.data.voided == true
-          && request.resource.data.voidReason is string && request.resource.data.voidReason.size() > 0
-          && onlyChanges(['voided', 'voidedAt', 'voidedBy', 'voidReason']);
+        allow update: if isOwner() && (
+          (resource.data.voided == false
+            && request.resource.data.voided == true
+            && request.resource.data.voidReason is string && request.resource.data.voidReason.size() > 0
+            && onlyChanges(['voided', 'voidedAt', 'voidedBy', 'voidReason']))
+          || (onlyChanges(['customerId'])
+            && request.resource.data.customerId is string
+            && request.resource.data.customerId.matches('^01[3-9][0-9]{8}$'))
+        );
         allow delete: if false;
       }
 

@@ -163,6 +163,15 @@ function upsertLocal(m: Medicine): Medicine {
   return m
 }
 
+/** Many medicines written at once (file import): one Dexie bulk write, one index rebuild. */
+export function upsertLocalMany(meds: readonly Medicine[]): void {
+  if (meds.length === 0) return
+  void localDb.medicines.bulkPut([...meds]).catch((e: unknown) => console.error('Local medicine save failed', e))
+  const byId = new Map(useCatalogStore.getState().byId)
+  for (const m of meds) byId.set(m.id, m)
+  setList([...byId.values()])
+}
+
 // Actions used by the screens: write to Firestore (queued offline) and update this device at once.
 export const addMedicine = (input: MedicineInput, source?: MedicineSourceInfo) =>
   upsertLocal(createMedicine(input, source))

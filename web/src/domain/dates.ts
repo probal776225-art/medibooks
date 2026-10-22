@@ -2,7 +2,7 @@
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
-import { withDigits } from './digits'
+import { toEnglishDigits, withDigits } from './digits'
 import type { DigitStyle, Millis } from './types'
 
 dayjs.extend(utc)
@@ -49,6 +49,19 @@ export function calendarDaysBetween(from: Millis, to: Millis): number {
 /** "22/10/2026" */
 export function formatDate(ms: Millis, digits: DigitStyle = 'en'): string {
   return withDigits(inDhaka(ms).format('DD/MM/YYYY'), digits)
+}
+
+/**
+ * "15/10/2026" (also 1/2/2026, 15-10-2026, 15.10.2026, Bangla digits) → start of that day in Dhaka.
+ * Returns null for anything that is not a real calendar date.
+ */
+export function parseDateDMY(text: string): Millis | null {
+  const m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(toEnglishDigits(text).trim())
+  if (!m) return null
+  const [d, mo, y] = [Number(m[1]), Number(m[2]), Number(m[3])]
+  const check = new Date(Date.UTC(y, mo - 1, d))
+  if (check.getUTCFullYear() !== y || check.getUTCMonth() !== mo - 1 || check.getUTCDate() !== d) return null
+  return dayjs.tz(`${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`, DHAKA_TZ).valueOf()
 }
 
 /** "10:30 AM" */

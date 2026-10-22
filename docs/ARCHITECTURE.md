@@ -346,6 +346,11 @@ All in `web/src/domain/`, pure functions, unit-tested (including property tests:
 - Void = one batch: `voided/voidedAt/voidedBy/voidReason` + `increment(−effect)` + audit. Voiding a sale cancels the whole bill, including any money marked "paid now" on it; if that money was really received, record it as a payment.
 - ব্যালেন্স যাচাই reads every transaction from the server (500 per page), compares Σ non-voided effects with each stored due, and repairs only with `increment(diff)` + an audit entry. It needs internet by design.
 
+**Implementation notes (Phase 6 — imports, change mobile):**
+- চালু বাকি ইমপোর্ট: CSV (`name, mobile, address, opening_due, as_of_date, note`, UTF-8, template downloads with a BOM for Excel) or a quick grid (Enter moves to the next cell; draft kept in Dexie). Every row is checked first (mobile, name for new customers, amount, date not in the future, duplicates in the file). Import = per row: customer merge-set (new) or update (existing, only if the owner chose "add on top") + an `opening` transaction dated `as_of_date` + `increment(totalDuePaisa)`, 200 rows per batch, fire-and-forget (works offline). No SMS.
+- Supplier medicine CSV: rows are normalized (prices → paisa, "Tab" → Tablet, "10 x 10" → strip/box sizes), matched by brand + strength + form, and diffed **only on the fields the file gives** (an empty cell never wipes data). Applying updates source fields only (`sourceName` becomes `csv`), logs source price changes in `medicinePriceHistory` (`reason: 'import'`) and writes a `medicineImports` record. Shop prices, status and bills are never touched; the same file twice gives zero changes. Supplier lists are partial, so medicines missing from a file are **not** flagged.
+- Change mobile (online only, awaited — an exception to fire-and-forget because it must see every transaction on the server): move each transaction's `customerId` (rules allow that one field alone), then in one batch create the new customer record with `increment(due)` + `movedFrom`, and archive the old one with `increment(−due)` + `movedTo`, plus an audit entry. Re-running after an interruption finishes the rest.
+
 ## 8. SMS integration strategy
 
 - **Only the Worker sends SMS** (API key never in the browser).

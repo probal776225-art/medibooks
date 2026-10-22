@@ -13,6 +13,7 @@ export const paths = {
   medicines: () => collection(db, SHOP, 'medicines'),
   medicine: (id: string) => doc(db, SHOP, 'medicines', id),
   medicinePriceHistory: () => collection(db, SHOP, 'medicinePriceHistory'),
+  medicineImports: () => collection(db, SHOP, 'medicineImports'),
   refMeta: (source: string) => doc(db, SHOP, 'refCatalog', source),
   refChunk: (source: string, chunkId: string) => doc(db, SHOP, 'refCatalog', source, 'chunks', chunkId),
   auditLog: () => collection(db, SHOP, 'auditLog'),

@@ -6,6 +6,7 @@ import { create } from 'zustand'
 import { localDb } from '../data/localdb'
 import { fetchRefChunks, fetchRefMeta, uploadRefCatalog, type RefCatalogMeta } from '../data/repos/refCatalog'
 import { toEnglishDigits } from '../domain/digits'
+import { medicineKey } from '../domain/medicines'
 import { mapMedexSheets, type MedexParseResult, type RefMedicine } from './import/medexRef'
 import { packRefCatalog, sha256Hex, unpackRefCatalog } from './import/refPack'
 import { readXlsx } from './import/xlsx'
@@ -93,10 +94,8 @@ async function ensureIndex(): Promise<void> {
   }
 }
 
-/** "napa|500 mg|tablet" — matches a reference row to a shop medicine that was added by hand or from another file. */
-export function refKey(m: { brandName: string; strength: string; dosageForm: string }): string {
-  return [m.brandName, m.strength, m.dosageForm].map((x) => x.replace(/\s+/g, ' ').trim().toLowerCase()).join('|')
-}
+/** Matches a reference row to a shop medicine that was added by hand or from another file. */
+export const refKey = medicineKey
 
 export interface OwnedFilter {
   /** MedEx ids already in the shop list. */

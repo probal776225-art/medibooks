@@ -33,6 +33,8 @@ export interface Customer {
   /** 'YYYY-MM' */
   reminderMonth: string | null
   reminderCountThisMonth: number
+  /** Set on the old record when the customer's mobile number was changed (the record is archived). */
+  movedTo: string | null
   createdAt: Millis
   createdBy: string
   updatedAt: Millis | null
@@ -179,7 +181,7 @@ export interface SourceRecord {
   unitPricePaisa?: Paisa
   stripPricePaisa?: Paisa
   packPricePaisa?: Paisa
-  /** ISO date the source says the data is from. */
-  sourceUpdatedAt?: string
+  /** Date the source says the data is from (start of that day, Dhaka). */
+  sourceUpdatedAt?: Millis
   raw: Record<string, string>
 }

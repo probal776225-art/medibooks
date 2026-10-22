@@ -2,6 +2,7 @@
 // Firestore's own cache is separate; this one exists so medicine search works offline without re-reading Firestore.
 import { Dexie, type Table } from 'dexie'
 import type { RefMedicine } from '../catalog/import/medexRef'
+import type { OpeningInputRow } from '../domain/openingImport'
 import type { SaleDraft } from '../domain/saleDraft'
 import type { Medicine, Millis } from '../domain/types'
 import type { RefCatalogMeta } from './repos/refCatalog'
@@ -11,11 +12,9 @@ export type MetaRow =
   | { key: 'refCatalogMeta'; value: RefCatalogMeta | null }
 
 /** Unsaved work kept on the device so nothing is lost if the app closes. */
-export interface DraftRow {
-  key: 'sale'
-  draft: SaleDraft
-  savedAt: Millis
-}
+export type DraftRow =
+  | { key: 'sale'; draft: SaleDraft; savedAt: Millis }
+  | { key: 'openingGrid'; rows: OpeningInputRow[]; savedAt: Millis }
 
 export interface UsageRow {
   medicineId: string

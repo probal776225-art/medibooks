@@ -9,6 +9,8 @@ import { CustomersPage } from '../features/customers/CustomersPage'
 import { NewCustomerPage } from '../features/customers/NewCustomerPage'
 import { HomePage } from '../features/home/HomePage'
 import { ImportsPage } from '../features/imports/ImportsPage'
+import { MedicineImportPage } from '../features/imports/MedicineImportPage'
+import { OpeningImportPage } from '../features/imports/OpeningImportPage'
 import { MedicineDetailPage } from '../features/medicines/MedicineDetailPage'
 import { MedicinesPage } from '../features/medicines/MedicinesPage'
 import { MorePage } from '../features/more/MorePage'
@@ -38,6 +40,8 @@ const router = createBrowserRouter([
       { path: ROUTES.medicines, element: <MedicinesPage /> },
       { path: '/medicines/:id', element: <MedicineDetailPage /> },
       { path: ROUTES.imports, element: <ImportsPage /> },
+      { path: ROUTES.importOpening, element: <OpeningImportPage /> },
+      { path: ROUTES.importMedicines, element: <MedicineImportPage /> },
       { path: ROUTES.settings, element: <SettingsPage /> },
       { path: ROUTES.more, element: <MorePage /> },
       ...placeholderRoutes,

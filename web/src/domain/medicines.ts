@@ -153,6 +153,11 @@ export function shopPriceChanges(
   return changes
 }
 
+/** "napa|500 mg|tablet" — identifies a medicine across lists (shop list, MedEx list, supplier files). */
+export function medicineKey(m: { brandName: string; strength: string; dosageForm: string }): string {
+  return [m.brandName, m.strength, m.dosageForm].map((x) => x.replace(/\s+/g, ' ').trim().toLowerCase()).join('|')
+}
+
 /** Re-read a short window before the cursor so a doc committed with a slightly older server time is not missed. */
 export const SYNC_OVERLAP_MS = 60_000
 

@@ -8,6 +8,7 @@ import { useT } from '../../i18n'
 import { useFormat } from '../../i18n/format'
 import { useDataStore } from '../../stores/data'
 import { useToastStore } from '../../stores/toast'
+import { ChangeMobileDialog } from './ChangeMobileDialog'
 import { CustomerForm } from './CustomerForm'
 import { CustomerLedger } from './CustomerLedger'
 import { CustomerSummary } from './CustomerSummary'
@@ -20,6 +21,7 @@ export function CustomerDetailPage() {
   const status = useDataStore((s) => s.customersStatus)
   const showToast = useToastStore((s) => s.show)
   const [editing, setEditing] = useState(false)
+  const [changingMobile, setChangingMobile] = useState(false)
 
   if (!customer) {
     return (
@@ -98,13 +100,21 @@ export function CustomerDetailPage() {
 
       <CustomerLedger customer={customer} />
 
-      <Button
-        variant="ghost"
-        className="w-full border border-slate-200"
-        onClick={() => setCustomerFlags(customer, { archived: !customer.archived })}
-      >
-        {customer.archived ? t('customer.unarchive') : t('customer.archive')}
-      </Button>
+      {!customer.movedTo && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button variant="ghost" className="border border-slate-200" onClick={() => setChangingMobile(true)}>
+            {t('mob.change')}
+          </Button>
+          <Button
+            variant="ghost"
+            className="border border-slate-200"
+            onClick={() => setCustomerFlags(customer, { archived: !customer.archived })}
+          >
+            {customer.archived ? t('customer.unarchive') : t('customer.archive')}
+          </Button>
+        </div>
+      )}
+      {changingMobile && <ChangeMobileDialog customer={customer} onClose={() => setChangingMobile(false)} />}
     </section>
   )
 }

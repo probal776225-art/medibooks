@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import { customerPath } from '../../app/routes'
 import type { Customer } from '../../domain/types'
 import { useT } from '../../i18n'
 import { useFormat } from '../../i18n/format'
@@ -24,6 +26,11 @@ export function CustomerSummary({ customer, children }: { customer: Customer; ch
           </span>
         )}
       </div>
+      {customer.movedTo && (
+        <Link to={customerPath(customer.movedTo)} className="mt-2 block text-sm font-medium text-teal-700 underline">
+          {t('mob.movedTo', { mobile: f.mobile(customer.movedTo) })}
+        </Link>
+      )}
       <div className="mt-3 flex flex-wrap items-end justify-between gap-2 border-t border-slate-100 pt-3">
         <div>
           <p className="text-sm text-slate-500">{t('customer.due')}</p>

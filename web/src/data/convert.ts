@@ -39,6 +39,7 @@ export function customerFromDoc(id: string, d: DocumentData): Customer {
     lastReminderAt: toMillis(d.lastReminderAt),
     reminderMonth: typeof d.reminderMonth === 'string' ? d.reminderMonth : null,
     reminderCountThisMonth: int(d.reminderCountThisMonth),
+    movedTo: typeof d.movedTo === 'string' ? d.movedTo : null,
     createdAt: toMillis(d.createdAt) ?? 0,
     createdBy: str(d.createdBy),
     updatedAt: toMillis(d.updatedAt),

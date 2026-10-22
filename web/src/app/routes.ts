@@ -13,6 +13,8 @@ export const ROUTES = {
   smsLog: '/sms-log',
   medicines: '/medicines',
   imports: '/imports',
+  importOpening: '/imports/opening',
+  importMedicines: '/imports/medicines',
   settings: '/settings',
 } as const
 
@@ -29,7 +31,7 @@ export interface NavItem {
   phase: number
 }
 
-export const NAV: Record<Exclude<RouteId, 'more' | 'customerNew'>, NavItem> = {
+export const NAV: Record<Exclude<RouteId, 'more' | 'customerNew' | 'importOpening' | 'importMedicines'>, NavItem> = {
   home: { id: 'home', label: 'nav.home', icon: 'home', phase: 9 },
   customers: { id: 'customers', label: 'nav.customers', icon: 'users', phase: 2 },
   newSale: { id: 'newSale', label: 'nav.newSale', icon: 'plus', phase: 4 },
