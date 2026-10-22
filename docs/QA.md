@@ -46,7 +46,7 @@ Ei file e ache: ki ki automatic test hoy, SPEC §14 er checklist er kon item kiv
 
 ## 4. Deploy (22/10/2026)
 
-- Live: **https://baki-khata-d7304.web.app** — Hosting, security rules (owner UID soho) ar 3 ta index deploy hoyeche.
+- Live: **https://medibooks.web.app** (main; 22/10 e notun Hosting site) ar **https://baki-khata-d7304.web.app** (project er nijer site, eki app) — Hosting, security rules (owner UID soho) ar 3 ta index deploy hoyeche.
 - Check kora: sob page 200; `index.html`/`sw.js`/manifest no-cache, `/assets` immutable, security header ache (HSTS Firebase nijei dey); login chara dokaner data porle **403**; Email/Password login chalu; live login page e kono console error nei, emulator er "টেস্ট মোড" nei.
 - Asol login (owner er password) ar data lekha owner nije check korben (niche).
 

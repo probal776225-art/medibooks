@@ -44,6 +44,9 @@ writeFileSync('.deploy/firestore.rules', rules.replace(PLACEHOLDER, env.OWNER_UI
 const config = JSON.parse(readFileSync('firebase.json', 'utf8'))
 config.firestore.rules = '.deploy/firestore.rules'
 config.hosting.public = 'web/dist-deploy'
+// HOSTING_SITES: every Hosting site that serves the app, main link first (default: the project's own site).
+const sites = (env.HOSTING_SITES || projectId).split(',').map((x) => x.trim()).filter(Boolean)
+config.hosting = sites.map((site) => ({ site, ...config.hosting }))
 delete config.emulators
 writeFileSync('firebase.deploy.json', `${JSON.stringify(config, null, 2)}\n`)
 
@@ -55,4 +58,5 @@ const passed = process.argv.slice(2)
 const only = passed.length ? passed : ['--only', 'hosting,firestore:rules,firestore:indexes']
 console.log(`\n→ Deploying to ${projectId} …`)
 run('npx', ['firebase', 'deploy', '--config', 'firebase.deploy.json', '--project', projectId, ...only])
-console.log(`\n✓ Done. The app: https://${projectId}.web.app\n`)
+const [main, ...others] = sites.map((s) => `https://${s}.web.app`)
+console.log(`\n✓ Done. The app: ${main}${others.length ? `  (also ${others.join(', ')})` : ''}\n`)

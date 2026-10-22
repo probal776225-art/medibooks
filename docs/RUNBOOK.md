@@ -2,7 +2,9 @@
 
 M/S ALLOPATHIC STORE & SURGICAL, R.K Mission Road, Sreemangal
 
-App er link: **https://baki-khata-d7304.web.app** (Firebase project: `baki-khata-d7304`)
+App er link: **https://medibooks.web.app** (Firebase project: `baki-khata-d7304`)
+
+Purono link `https://baki-khata-d7304.web.app` o eki app dekhay, eki data. Tobe notun phone/PC te **medibooks.web.app** i install korun. Purono link e install kora app thakle: "সিঙ্ক বাকি" 0 hole seta uninstall kore notun link e login + install + PIN korun.
 
 Ei khatay ache: prothombar setup, PC/phone e install, protidiner kaj, internet na thakle ki hoy, bhul thik kora, backup, Firebase er free limit dekha, ar kono somossa hole ki korben.
 
