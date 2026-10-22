@@ -186,7 +186,7 @@ export function CustomerLedger({ customer }: { customer: Customer }) {
                         txn.voided ? 'text-slate-400 line-through' : plus ? 'text-rose-700' : 'text-emerald-700'
                       }`}
                     >
-                      {plus ? '+' : '−'}
+                      {txn.effectPaisa > 0 ? '+' : txn.effectPaisa < 0 ? '−' : ''}
                       {f.money(Math.abs(txn.effectPaisa))}
                     </span>
                     <span className="block text-xs text-slate-500">

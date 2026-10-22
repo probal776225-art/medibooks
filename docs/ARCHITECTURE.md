@@ -351,6 +351,11 @@ All in `web/src/domain/`, pure functions, unit-tested (including property tests:
 - Supplier medicine CSV: rows are normalized (prices → paisa, "Tab" → Tablet, "10 x 10" → strip/box sizes), matched by brand + strength + form, and diffed **only on the fields the file gives** (an empty cell never wipes data). Applying updates source fields only (`sourceName` becomes `csv`), logs source price changes in `medicinePriceHistory` (`reason: 'import'`) and writes a `medicineImports` record. Shop prices, status and bills are never touched; the same file twice gives zero changes. Supplier lists are partial, so medicines missing from a file are **not** flagged.
 - Change mobile (online only, awaited — an exception to fire-and-forget because it must see every transaction on the server): move each transaction's `customerId` (rules allow that one field alone), then in one batch create the new customer record with `increment(due)` + `movedFrom`, and archive the old one with `increment(−due)` + `movedTo`, plus an audit entry. Re-running after an interruption finishes the rest.
 
+**Implementation notes (Phase 9 — dashboard + reports):**
+- Home: one live query for today's transactions (Dhaka day, re-subscribes after midnight) → আজ বাকি দিলাম (Σ net − paid now of bills), আজ জমা পেলাম (payments + money paid with bills), last 10. বাজারে মোট বাকি comes from the customer list already in memory. আজকের তাগাদা waits for Phase 8.
+- Reports: one `createdAt` range query per period (আজ, এই সপ্তাহ = Saturday–Friday, এই মাস, custom). Voided transactions are counted but excluded from totals. Aging buckets (0–30, 31–60, 61–90, 90+ days since last payment, else since added), top 10 and new customers use the in-memory customer list. Offline, the report says it is computed from this device's cache.
+- CSV export: UTF-8 with BOM, amounts in taka with two decimals and English digits so spreadsheets read them as numbers. PNG export comes with Phase 10; SMS counts with Phase 7.
+
 ## 8. SMS integration strategy
 
 - **Only the Worker sends SMS** (API key never in the browser).

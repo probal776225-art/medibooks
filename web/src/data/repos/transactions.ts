@@ -157,3 +157,35 @@ export function repairBalances(mismatches: readonly BalanceMismatch[]): void {
     commitInBackground(batch)
   }
 }
+
+const rangeQuery = (start: number, end: number) =>
+  query(
+    paths.transactions(),
+    where('createdAt', '>=', Timestamp.fromMillis(start)),
+    where('createdAt', '<', Timestamp.fromMillis(end)),
+    orderBy('createdAt', 'desc'),
+  )
+
+/** All transactions in [start, end), live (the home screen's "today"). */
+export function subscribeRange(
+  start: number,
+  end: number,
+  onData: (txns: Transaction[], fromCache: boolean) => void,
+  onError: (e: Error) => void,
+): Unsubscribe {
+  return onSnapshot(
+    rangeQuery(start, end),
+    (snap) =>
+      onData(
+        snap.docs.map((d) => transactionFromDoc(d.id, d.data({ serverTimestamps: 'estimate' }))),
+        snap.metadata.fromCache,
+      ),
+    onError,
+  )
+}
+
+/** One read of a date range (reports). Offline it returns what this device has cached. */
+export async function fetchRange(start: number, end: number): Promise<{ txns: Transaction[]; fromCache: boolean }> {
+  const snap = await getDocs(rangeQuery(start, end))
+  return { txns: snap.docs.map((d) => transactionFromDoc(d.id, d.data())), fromCache: snap.metadata.fromCache }
+}

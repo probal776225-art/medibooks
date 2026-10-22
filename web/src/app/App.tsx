@@ -15,6 +15,7 @@ import { MedicineDetailPage } from '../features/medicines/MedicineDetailPage'
 import { MedicinesPage } from '../features/medicines/MedicinesPage'
 import { MorePage } from '../features/more/MorePage'
 import { PaymentPage } from '../features/payment/PaymentPage'
+import { ReportsPage } from '../features/reports/ReportsPage'
 import { NewSalePage } from '../features/sale/NewSalePage'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { useHtmlLang, useT } from '../i18n'
@@ -23,7 +24,7 @@ import { startSessionData, stopSessionData } from '../stores/data'
 import { Layout } from './Layout'
 import { NAV, ROUTES } from './routes'
 
-const placeholderRoutes = (['reminders', 'reports', 'smsLog'] as const).map(
+const placeholderRoutes = (['reminders', 'smsLog'] as const).map(
   (id) => ({ path: ROUTES[id], element: <PlaceholderPage item={NAV[id]} /> }),
 )
 
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
       { path: ROUTES.payment, element: <PaymentPage /> },
       { path: ROUTES.medicines, element: <MedicinesPage /> },
       { path: '/medicines/:id', element: <MedicineDetailPage /> },
+      { path: ROUTES.reports, element: <ReportsPage /> },
       { path: ROUTES.imports, element: <ImportsPage /> },
       { path: ROUTES.importOpening, element: <OpeningImportPage /> },
       { path: ROUTES.importMedicines, element: <MedicineImportPage /> },
