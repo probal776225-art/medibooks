@@ -7,7 +7,7 @@ Single owner, non-commercial, used on PC + mobile. Main goal: never lose track o
 - **Design (source of truth): `docs/ARCHITECTURE.md`** — schema, offline strategy, medicine master-data, import pipeline, money rules, phases.
 - Screens and behaviour: `docs/SPEC.md` — read the section for the current phase before coding.
 - Build plan: `docs/PROMPTS.md` — one phase at a time.
-- Architecture status: **approved 2026-10-22.** Phases 1–3 done (skeleton + domain core; Firebase, login, customers; medicine master + offline search); next is Phase 4.
+- Architecture status: **approved 2026-10-22.** Phases 1–4 done (skeleton + domain core; Firebase, login, customers; medicine master + offline search + MedEx reference list; New Baki sale screen); next is Phase 5.
 - `~/Claude/MedEx_Medicine_Directory.xlsx` (owner-supplied, 26,506 brands, no prices): owner confirmed MedEx's written permission on 2026-10-22; it is imported through Settings → ইমপোর্ট as the reference list — see ARCHITECTURE §0 and §3. Never copy this file into the repo or `web/public`.
 
 ## Tech stack (do not change without asking)

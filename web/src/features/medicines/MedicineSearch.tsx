@@ -17,9 +17,11 @@ interface Props {
   onPickReference?: (r: RefMedicine) => void
   autoFocus?: boolean
   includeInactive?: boolean
+  /** id for the input, so a keyboard shortcut can focus it. */
+  inputId?: string
 }
 
-export function MedicineSearch({ onSelect, onAddNew, onPickReference, autoFocus, includeInactive }: Props) {
+export function MedicineSearch({ onSelect, onAddNew, onPickReference, autoFocus, includeInactive, inputId }: Props) {
   const t = useT()
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
@@ -53,6 +55,7 @@ export function MedicineSearch({ onSelect, onAddNew, onPickReference, autoFocus,
       <label className="relative block">
         <Icon name="search" className="pointer-events-none absolute top-3.5 left-3 size-5 text-slate-400" />
         <TextInput
+          id={inputId}
           type="search"
           role="combobox"
           aria-expanded={results.length > 0}

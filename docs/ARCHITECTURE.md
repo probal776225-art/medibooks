@@ -333,6 +333,13 @@ All in `web/src/domain/`, pure functions, unit-tested (including property tests:
 
 ---
 
+**Implementation notes (Phase 4 — New Baki):**
+- The bill being typed is a text-based draft (`domain/saleDraft.ts`): live totals and per-line errors come from `evaluateDraft()`; `draftToSale()` builds the snapshot transaction at save time. The draft is autosaved to Dexie (`drafts`), so a closed tab never loses a bill.
+- Save = one batch: transaction + `increment(totalDuePaisa)` + `lastTxnAt` (+ `lastPaymentAt` when money was paid now). Not awaited; works offline.
+- A new customer typed on the sale screen is created first (its own small batch) and the bill follows; both queue in order offline.
+- Memo numbers and mobile numbers are shown in English digits (easier to match on paper); amounts follow the Bangla/English digit setting.
+- Same medicine + unit added again increases the quantity instead of adding a row. An edited price can be kept as the shop price for that unit (logged in price history).
+
 ## 8. SMS integration strategy
 
 - **Only the Worker sends SMS** (API key never in the browser).

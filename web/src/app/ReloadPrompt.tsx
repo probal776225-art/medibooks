@@ -15,7 +15,7 @@ export function ReloadPrompt() {
   return (
     <div
       role="alert"
-      className="fixed inset-x-3 bottom-24 z-30 rounded-xl border border-slate-200 bg-white p-4 shadow-xl md:inset-x-auto md:right-6 md:bottom-6 md:w-96"
+      className="fixed inset-x-3 bottom-36 z-30 rounded-xl border border-slate-200 bg-white p-4 shadow-xl md:inset-x-auto md:right-6 md:bottom-6 md:w-96"
     >
       {needRefresh ? (
         <>

@@ -12,6 +12,7 @@ import { ImportsPage } from '../features/imports/ImportsPage'
 import { MedicineDetailPage } from '../features/medicines/MedicineDetailPage'
 import { MedicinesPage } from '../features/medicines/MedicinesPage'
 import { MorePage } from '../features/more/MorePage'
+import { NewSalePage } from '../features/sale/NewSalePage'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { useHtmlLang, useT } from '../i18n'
 import { initAuth, useAuthStore } from '../stores/auth'
@@ -19,7 +20,7 @@ import { startSessionData, stopSessionData } from '../stores/data'
 import { Layout } from './Layout'
 import { NAV, ROUTES } from './routes'
 
-const placeholderRoutes = (['newSale', 'payment', 'reminders', 'reports', 'smsLog'] as const).map(
+const placeholderRoutes = (['payment', 'reminders', 'reports', 'smsLog'] as const).map(
   (id) => ({ path: ROUTES[id], element: <PlaceholderPage item={NAV[id]} /> }),
 )
 
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
       { path: ROUTES.customers, element: <CustomersPage /> },
       { path: ROUTES.customerNew, element: <NewCustomerPage /> },
       { path: '/customers/:mobile', element: <CustomerDetailPage /> },
+      { path: ROUTES.newSale, element: <NewSalePage /> },
       { path: ROUTES.medicines, element: <MedicinesPage /> },
       { path: '/medicines/:id', element: <MedicineDetailPage /> },
       { path: ROUTES.imports, element: <ImportsPage /> },
