@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { startCatalog, stopCatalog } from '../catalog/store'
 import { PlaceholderPage } from '../components/PlaceholderPage'
@@ -8,6 +8,7 @@ import { CustomerDetailPage } from '../features/customers/CustomerDetailPage'
 import { CustomersPage } from '../features/customers/CustomersPage'
 import { NewCustomerPage } from '../features/customers/NewCustomerPage'
 import { HomePage } from '../features/home/HomePage'
+import { LockScreen } from '../features/lock/LockScreen'
 import { ImportsPage } from '../features/imports/ImportsPage'
 import { MedicineImportPage } from '../features/imports/MedicineImportPage'
 import { OpeningImportPage } from '../features/imports/OpeningImportPage'
@@ -21,6 +22,7 @@ import { SettingsPage } from '../features/settings/SettingsPage'
 import { useHtmlLang, useT } from '../i18n'
 import { initAuth, useAuthStore } from '../stores/auth'
 import { startSessionData, stopSessionData } from '../stores/data'
+import { startIdleWatch, unlockAfterLogin, useLockStore } from '../stores/lock'
 import { Layout } from './Layout'
 import { NAV, ROUTES } from './routes'
 
@@ -62,8 +64,17 @@ function Splash() {
 export function App() {
   useHtmlLang()
   const status = useAuthStore((s) => s.status)
+  const locked = useLockStore((s) => s.locked)
+  const prevStatus = useRef(status)
 
   useEffect(() => initAuth(), [])
+  useEffect(() => startIdleWatch(), [])
+
+  // Opening the app with a saved sign-in keeps the PIN lock; signing in with the password opens it.
+  useEffect(() => {
+    if (prevStatus.current === 'signedOut' && status === 'signedIn') unlockAfterLogin()
+    prevStatus.current = status
+  }, [status])
 
   // Realtime listeners and medicine sync only while signed in.
   useEffect(() => {
@@ -80,8 +91,12 @@ export function App() {
   if (status === 'signedOut') return <LoginPage />
   return (
     <>
-      <RouterProvider router={router} />
-      <Toaster />
+      {/* Hidden (not unmounted) while locked: drafts and scroll positions survive. */}
+      <div className={locked ? 'invisible' : undefined} aria-hidden={locked || undefined}>
+        <RouterProvider router={router} />
+        <Toaster />
+      </div>
+      {locked && <LockScreen />}
     </>
   )
 }

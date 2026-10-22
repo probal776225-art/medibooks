@@ -1,7 +1,7 @@
 import { onSnapshot, serverTimestamp, setDoc, Timestamp, type Unsubscribe } from 'firebase/firestore'
 import { DEFAULT_SETTINGS, withDefaults, type ShopSettings } from '../../domain/settings'
 import { paths } from '../paths'
-import { writeContext } from '../writer'
+import { auditInBatch, commitInBackground, newBatch, writeContext } from '../writer'
 
 export interface SettingsSnapshot {
   settings: ShopSettings
@@ -31,4 +31,15 @@ export function bootstrapSettings(): void {
     createdBy: ctx.uid,
     updatedAt: serverTimestamp(),
   }).catch((e: unknown) => console.error('Settings bootstrap failed', e))
+}
+
+type EditableSection = 'shop' | 'billing'
+
+/** Owner edit of one settings section (merge, fire-and-forget) + audit. */
+export function saveSettingsSection<K extends EditableSection>(key: K, before: ShopSettings[K], after: ShopSettings[K]): void {
+  const ctx = writeContext()
+  const batch = newBatch()
+  batch.set(paths.settings(), { [key]: after, updatedAt: serverTimestamp() }, { merge: true })
+  auditInBatch(batch, { action: `settings.${key}`, entity: 'settings', entityId: 'general', before, after }, ctx)
+  commitInBackground(batch)
 }

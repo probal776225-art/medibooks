@@ -6,6 +6,7 @@ import { Button, buttonClass, Card } from '../../components/ui'
 import { medicineDisplayName } from '../../domain/pricing'
 import { useT, type MessageKey } from '../../i18n'
 import { useFormat } from '../../i18n/format'
+import { MedexPriceCard } from './MedexPriceCard'
 
 type Step = 'idle' | 'reading' | 'preview' | 'saving' | 'done'
 
@@ -161,6 +162,7 @@ export function ImportsPage() {
         </Card>
       </div>
       <MedexListCard />
+      <MedexPriceCard />
     </section>
   )
 }

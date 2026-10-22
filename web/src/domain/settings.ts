@@ -26,6 +26,8 @@ export interface ShopSettings {
   }
   billing: { roundToTaka: boolean }
   ui: { language: Language; digits: DigitStyle }
+  /** Millis of the last JSON backup from any device; 0 = never. Drives the weekly reminder. */
+  backup: { lastExportAt: number }
   schemaVersion: typeof SCHEMA_VERSION
 }
 
@@ -48,6 +50,7 @@ export const DEFAULT_SETTINGS: ShopSettings = {
   },
   billing: { roundToTaka: true },
   ui: { language: 'bn', digits: 'bn' },
+  backup: { lastExportAt: 0 },
   schemaVersion: SCHEMA_VERSION,
 }
 
@@ -74,6 +77,7 @@ export function withDefaults(data: unknown): ShopSettings {
     reminder: pick(DEFAULT_SETTINGS.reminder, src.reminder),
     billing: pick(DEFAULT_SETTINGS.billing, src.billing),
     ui: pick(DEFAULT_SETTINGS.ui, src.ui),
+    backup: pick(DEFAULT_SETTINGS.backup, src.backup),
     schemaVersion: SCHEMA_VERSION,
   }
 }

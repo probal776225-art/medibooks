@@ -1,5 +1,7 @@
 // MedEx brand list (owner-supplied file, used with MedEx's written permission) → reference rows.
-// Reference rows are NOT shop medicines: they have no prices. The owner adds what the shop sells.
+// Reference rows are NOT shop medicines. Prices come later from the MedEx price file (medexPrices.ts);
+// the owner adds what the shop sells.
+import type { Paisa } from '../../domain/types'
 import type { Sheet } from './xlsx'
 
 export interface RefMedicine {
@@ -13,6 +15,14 @@ export interface RefMedicine {
   /** Last part of the MedEx page link (the link is rebuilt from id + slug). */
   slug: string
   herbal: boolean
+  /** From the MedEx price file (missing on older device copies). Per piece, or per bottle/tube/vial for liquids. */
+  unitPricePaisa?: Paisa | null
+  /** Price of `packDescription` (a box of tablets); null for liquids. */
+  packPricePaisa?: Paisa | null
+  /** "10 x 10", "100 ml bottle" */
+  packDescription?: string
+  /** Every size and price as MedEx lists them, for display. */
+  priceText?: string
 }
 
 export const MEDEX_COLUMNS = {

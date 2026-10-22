@@ -4,8 +4,10 @@ import { addMedicine } from '../../catalog/store'
 import { Modal } from '../../components/ui'
 import type { Medicine } from '../../domain/types'
 import { useT } from '../../i18n'
+import { useFormat } from '../../i18n/format'
 import { useToastStore } from '../../stores/toast'
 import { MedicineForm } from './MedicineForm'
+import { refPriceText, refSourcePrices } from './refPrice'
 
 /**
  * "+ নতুন ওষুধ" dialog — used on the medicine list now and by the sale screen in Phase 4.
@@ -25,6 +27,9 @@ export function QuickAddMedicine({
   const t = useT()
   const showToast = useToastStore((s) => s.show)
   const refMeta = useRefStore((s) => s.meta)
+  const f = useFormat()
+  const prices = reference ? refSourcePrices(reference) : undefined
+  const priceText = reference ? refPriceText(reference, f.money, t('med.piece'), true) : null
   return (
     <Modal title={t('med.new')} onClose={onClose}>
       <MedicineForm
@@ -37,9 +42,17 @@ export function QuickAddMedicine({
             dosageForm: reference.dosageForm,
             manufacturer: reference.manufacturer,
             sourceUrl: refUrl(reference),
+            packDescription: reference.packDescription ?? '',
           }
         }
-        note={reference ? t('ref.addHint') : undefined}
+        sourcePrices={prices}
+        note={
+          reference
+            ? priceText
+              ? t('ref.addHintPriced', { price: priceText })
+              : t('ref.addHint')
+            : undefined
+        }
         submitLabel={t('customer.save')}
         onSubmit={(input) => {
           const m = addMedicine(
@@ -51,6 +64,7 @@ export function QuickAddMedicine({
               sourceUpdatedAt: refMeta?.fileDate ?? null,
               sourceFetchedAt: refMeta?.importedAt ?? null,
               lastImportId: refMeta?.version ?? null,
+              prices,
             },
           )
           showToast('success', 'med.saved')

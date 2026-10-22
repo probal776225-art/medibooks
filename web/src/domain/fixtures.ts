@@ -1,5 +1,5 @@
 // Test fixtures shared by domain tests.
-import { SCHEMA_VERSION, type Medicine } from './types'
+import { SCHEMA_VERSION, type Customer, type Medicine } from './types'
 
 export function makeMedicine(overrides: Partial<Medicine> = {}): Medicine {
   return {
@@ -28,6 +28,30 @@ export function makeMedicine(overrides: Partial<Medicine> = {}): Medicine {
     sourceStatus: 'listed',
     status: 'active',
     createdAt: 0,
+    createdBy: 'owner',
+    updatedAt: null,
+    schemaVersion: SCHEMA_VERSION,
+    ...overrides,
+  }
+}
+
+export function makeCustomer(overrides: Partial<Customer> = {}): Customer {
+  return {
+    mobile: '01711000000',
+    name: 'Name',
+    address: '',
+    note: '',
+    totalDuePaisa: 0,
+    smsEnabled: true,
+    reminderEnabled: true,
+    archived: false,
+    lastTxnAt: null,
+    lastPaymentAt: null,
+    lastReminderAt: null,
+    reminderMonth: null,
+    reminderCountThisMonth: 0,
+    movedTo: null,
+    createdAt: Date.UTC(2026, 9, 1),
     createdBy: 'owner',
     updatedAt: null,
     schemaVersion: SCHEMA_VERSION,

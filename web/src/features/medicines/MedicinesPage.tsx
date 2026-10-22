@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { medicinePath } from '../../app/routes'
 import type { RefMedicine } from '../../catalog/import/medexRef'
 import { syncMedicines, useCatalogStore, useMedicineSearch } from '../../catalog/store'
 import { Icon } from '../../components/Icon'
 import { Button, TextInput } from '../../components/ui'
+import { hasPriceOverride } from '../../domain/medicines'
 import type { Medicine } from '../../domain/types'
 import { useT, type MessageKey } from '../../i18n'
 import { useFormat } from '../../i18n/format'
@@ -12,12 +13,22 @@ import { MedicineLine } from './parts'
 import { RefResults } from './RefResults'
 import { QuickAddMedicine } from './QuickAddMedicine'
 
-type StatusFilter = 'active' | 'inactive' | 'all'
+type StatusFilter = 'active' | 'inactive' | 'all' | 'override' | 'manual'
 const FILTERS: { id: StatusFilter; label: MessageKey }[] = [
   { id: 'active', label: 'med.filter.active' },
   { id: 'inactive', label: 'med.filter.inactive' },
   { id: 'all', label: 'med.filter.all' },
+  { id: 'override', label: 'med.filter.override' },
+  { id: 'manual', label: 'med.filter.manual' },
 ]
+const isFilter = (v: string | null): v is StatusFilter => FILTERS.some((x) => x.id === v)
+
+function matchesFilter(m: Medicine, filter: StatusFilter): boolean {
+  if (filter === 'all') return true
+  if (filter === 'override') return hasPriceOverride(m)
+  if (filter === 'manual') return m.sourceName === 'manual'
+  return m.status === filter
+}
 const PAGE = 100
 
 function SyncStatus() {
@@ -47,14 +58,17 @@ export function MedicinesPage() {
   const all = useCatalogStore((s) => s.medicines)
   const status = useCatalogStore((s) => s.status)
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<StatusFilter>('active')
+  // Settings links here with ?show=override or ?show=manual.
+  const [params] = useSearchParams()
+  const showParam = params.get('show')
+  const [filter, setFilter] = useState<StatusFilter>(isFilter(showParam) ? showParam : 'active')
   const [shown, setShown] = useState(PAGE)
   const [adding, setAdding] = useState<{ name?: string; reference?: RefMedicine } | null>(null)
 
   const searched = useMedicineSearch(query, { includeInactive: filter !== 'active', limit: 300 })
   const rows: Medicine[] = useMemo(() => {
     const base = query.trim() ? searched : all
-    return filter === 'all' ? base : base.filter((m) => m.status === filter)
+    return base.filter((m) => matchesFilter(m, filter))
   }, [all, searched, query, filter])
 
   return (
@@ -84,7 +98,7 @@ export function MedicinesPage() {
         />
       </label>
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         {FILTERS.map((x) => (
           <button
             key={x.id}

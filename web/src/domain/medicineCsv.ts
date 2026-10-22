@@ -157,6 +157,16 @@ function sourceValues(r: SourceRecord): Partial<Record<ImportField, string | num
   >
 }
 
+/** Source fields the record would change on this medicine (only fields the record gives). */
+export function sourceChanges(r: SourceRecord, m: Medicine): FieldChange[] {
+  const changes: FieldChange[] = []
+  for (const [field, after] of Object.entries(sourceValues(r)) as [ImportField, string | number][]) {
+    const before = m[field] ?? null
+    if (before !== after) changes.push({ field, before, after })
+  }
+  return changes
+}
+
 export function planMedicineImport(rows: readonly CsvRow[], medicines: readonly Medicine[]): ImportPlan {
   const byKey = new Map<string, Medicine[]>()
   for (const m of medicines) {
@@ -178,11 +188,7 @@ export function planMedicineImport(rows: readonly CsvRow[], medicines: readonly 
       items.push({ line: row.line, kind: 'new', record: r, medicine: null, changes: [] })
       continue
     }
-    const changes: FieldChange[] = []
-    for (const [field, after] of Object.entries(sourceValues(r)) as [ImportField, string | number][]) {
-      const before = m[field] ?? null
-      if (before !== after) changes.push({ field, before, after })
-    }
+    const changes = sourceChanges(r, m)
     items.push({ line: row.line, kind: changes.length ? 'changed' : 'unchanged', record: r, medicine: m, changes })
   }
   errors.sort((a, b) => a.line - b.line)

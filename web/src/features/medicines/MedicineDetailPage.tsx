@@ -5,6 +5,7 @@ import { changeMedicineStatus, editMedicine, useCatalogStore } from '../../catal
 import { Icon } from '../../components/Icon'
 import { Button, buttonClass, Card } from '../../components/ui'
 import { fetchPriceHistory, type PriceHistoryRow } from '../../data/repos/medicines'
+import { hasPriceOverride, withoutOverrides } from '../../domain/medicines'
 import { medicineDisplayName, sellableUnits, type UnitOption } from '../../domain/pricing'
 import type { Medicine } from '../../domain/types'
 import { useT, type MessageKey } from '../../i18n'
@@ -153,6 +154,18 @@ export function MedicineDetailPage() {
             <Button variant="outline" onClick={() => setEditing(true)}>
               {t('customer.edit')}
             </Button>
+            {hasPriceOverride(m) && (
+              <Button
+                variant="ghost"
+                className="border border-slate-200"
+                onClick={() => {
+                  editMedicine(m, withoutOverrides(m))
+                  showToast('info', 'med.overrideCleared')
+                }}
+              >
+                {t('med.clearOverride')}
+              </Button>
+            )}
             {m.sourceUrl && (
               <a href={m.sourceUrl} target="_blank" rel="noopener noreferrer" className={buttonClass('ghost', 'border border-slate-200')}>
                 {t('med.openLink')} ↗

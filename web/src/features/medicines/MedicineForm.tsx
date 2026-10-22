@@ -20,7 +20,11 @@ interface Props {
   /** Prefill the brand name (e.g. what was typed in search). */
   initialName?: string
   /** Prefill from a reference row (MedEx list); the owner adds price and pack. */
-  prefill?: Partial<Pick<MedicineInput, 'brandName' | 'genericName' | 'strength' | 'dosageForm' | 'manufacturer' | 'sourceUrl'>>
+  prefill?: Partial<
+    Pick<MedicineInput, 'brandName' | 'genericName' | 'strength' | 'dosageForm' | 'manufacturer' | 'sourceUrl' | 'packDescription'>
+  >
+  /** Source prices a new medicine will get (MedEx price file); shown as placeholders like an import's. */
+  sourcePrices?: { unit: Paisa | null; strip: Paisa | null; pack: Paisa | null }
   /** Shown above the price fields (e.g. "the file has no prices"). */
   note?: string
   submitLabel: string
@@ -29,7 +33,7 @@ interface Props {
 }
 
 /** Prices typed here are the SHOP's own prices; imported (source) prices are shown as placeholders. */
-export function MedicineForm({ initial, initialName = '', prefill, note, submitLabel, onSubmit, onCancel }: Props) {
+export function MedicineForm({ initial, initialName = '', prefill, sourcePrices, note, submitLabel, onSubmit, onCancel }: Props) {
   const t = useT()
   const medicines = useCatalogStore((s) => s.medicines)
   const companies = useMemo(
@@ -42,9 +46,9 @@ export function MedicineForm({ initial, initialName = '', prefill, note, submitL
     strength: initial?.strength ?? prefill?.strength ?? '',
     dosageForm: initial?.dosageForm ?? prefill?.dosageForm ?? '',
     manufacturer: initial?.manufacturer ?? prefill?.manufacturer ?? '',
-    packDescription: initial?.packDescription ?? '',
-    piecesPerStrip: piecesText(initial?.piecesPerStrip ?? null),
-    piecesPerPack: piecesText(initial?.piecesPerPack ?? null),
+    packDescription: initial?.packDescription ?? prefill?.packDescription ?? '',
+    piecesPerStrip: piecesText(initial?.piecesPerStrip ?? parsePackDescription(prefill?.packDescription ?? '').piecesPerStrip),
+    piecesPerPack: piecesText(initial?.piecesPerPack ?? parsePackDescription(prefill?.packDescription ?? '').piecesPerPack),
     unitPrice: priceText(initial?.shopUnitPricePaisa ?? null),
     stripPrice: priceText(initial?.shopStripPricePaisa ?? null),
     packPrice: priceText(initial?.shopPackPricePaisa ?? null),
@@ -146,7 +150,7 @@ export function MedicineForm({ initial, initialName = '', prefill, note, submitL
           value={v.unitPrice}
           onChange={set('unitPrice')}
           inputMode="decimal"
-          placeholder={sourceHint(initial?.sourceUnitPricePaisa)}
+          placeholder={sourceHint(initial?.sourceUnitPricePaisa ?? sourcePrices?.unit)}
         />
       </Field>
       <div className="grid grid-cols-2 gap-3">
@@ -155,7 +159,7 @@ export function MedicineForm({ initial, initialName = '', prefill, note, submitL
             value={v.stripPrice}
             onChange={set('stripPrice')}
             inputMode="decimal"
-            placeholder={sourceHint(initial?.sourceStripPricePaisa)}
+            placeholder={sourceHint(initial?.sourceStripPricePaisa ?? sourcePrices?.strip)}
           />
         </Field>
         <Field label={t('med.packPrice')}>
@@ -163,7 +167,7 @@ export function MedicineForm({ initial, initialName = '', prefill, note, submitL
             value={v.packPrice}
             onChange={set('packPrice')}
             inputMode="decimal"
-            placeholder={sourceHint(initial?.sourcePackPricePaisa)}
+            placeholder={sourceHint(initial?.sourcePackPricePaisa ?? sourcePrices?.pack)}
           />
         </Field>
       </div>

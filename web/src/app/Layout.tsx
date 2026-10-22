@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { Icon } from '../components/Icon'
 import { useT } from '../i18n'
+import { useDataStore } from '../stores/data'
 import { useOnline, usePendingCount } from '../stores/sync'
 import { useUiStore } from '../stores/ui'
 import { ReloadPrompt } from './ReloadPrompt'
@@ -12,12 +13,13 @@ function Header() {
   const online = useOnline()
   const pending = usePendingCount()
   const toggleLanguage = useUiStore((s) => s.toggleLanguage)
+  const shopName = useDataStore((s) => s.settings.shop.name)
 
   return (
     <header className="sticky top-0 z-20 flex min-h-14 items-center gap-3 border-b border-slate-200 bg-white/95 px-4 pt-[env(safe-area-inset-top)] backdrop-blur">
       <div className="min-w-0 flex-1">
         <div className="text-lg font-bold leading-tight text-teal-800">{t('app.name')}</div>
-        <div className="truncate text-xs leading-tight text-slate-500">{t('app.shop')}</div>
+        <div className="truncate text-xs leading-tight text-slate-500">{shopName}</div>
       </div>
       {pending > 0 && (
         <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">

@@ -8,8 +8,9 @@ export interface RefDict {
   companies: string[]
 }
 
-/** [id, brand, formIdx, strength, genericIdx, companyIdx, slug, herbal] */
-type PackedRow = [number, string, number, string, number, number, string, 0 | 1]
+/** [id, brand, formIdx, strength, genericIdx, companyIdx, slug, herbal] + [unit, pack, packText, priceText] when priced */
+type BaseRow = [number, string, number, string, number, number, string, 0 | 1]
+type PackedRow = BaseRow | [...BaseRow, number, number | null, string, string]
 
 export const MAX_CHUNK_BYTES = 700_000
 
@@ -39,7 +40,7 @@ export function packRefCatalog(items: readonly RefMedicine[], maxChunkBytes = MA
   let current: string[] = []
   let size = 2
   for (const r of items) {
-    const row: PackedRow = [
+    const base: BaseRow = [
       Number(r.id),
       r.brandName,
       forms.at(r.dosageForm),
@@ -49,6 +50,11 @@ export function packRefCatalog(items: readonly RefMedicine[], maxChunkBytes = MA
       r.slug,
       r.herbal ? 1 : 0,
     ]
+    // Price columns only for priced rows, so a list without prices packs exactly as before.
+    const row: PackedRow =
+      r.unitPricePaisa === null || r.unitPricePaisa === undefined
+        ? base
+        : [...base, r.unitPricePaisa, r.packPricePaisa ?? null, r.packDescription ?? '', r.priceText ?? '']
     const json = JSON.stringify(row)
     const bytes = enc.encode(json).length + 1
     if (current.length && size + bytes > maxChunkBytes) {
@@ -68,7 +74,14 @@ export function unpackRefCatalog(dictJson: string, chunks: readonly string[]): R
   const dict = JSON.parse(dictJson) as RefDict
   const out: RefMedicine[] = []
   for (const chunk of chunks) {
-    for (const [id, brandName, f, strength, g, c, slug, herbal] of JSON.parse(chunk) as PackedRow[]) {
+    for (const row of JSON.parse(chunk) as PackedRow[]) {
+      const [id, brandName, f, strength, g, c, slug, herbal, unit, pack, packText, priceText] = row as [
+        ...BaseRow,
+        number?,
+        (number | null)?,
+        string?,
+        string?,
+      ]
       out.push({
         id: String(id),
         brandName,
@@ -78,6 +91,9 @@ export function unpackRefCatalog(dictJson: string, chunks: readonly string[]): R
         manufacturer: dict.companies[c] ?? '',
         slug,
         herbal: herbal === 1,
+        ...(unit === undefined
+          ? {}
+          : { unitPricePaisa: unit, packPricePaisa: pack ?? null, packDescription: packText ?? '', priceText: priceText ?? '' }),
       })
     }
   }

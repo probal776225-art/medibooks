@@ -139,6 +139,24 @@ export interface PriceChange {
   newPaisa: Paisa | null
 }
 
+const SOURCE_FOR: Record<ShopPriceField, 'sourceUnitPricePaisa' | 'sourceStripPricePaisa' | 'sourcePackPricePaisa'> = {
+  shopUnitPricePaisa: 'sourceUnitPricePaisa',
+  shopStripPricePaisa: 'sourceStripPricePaisa',
+  shopPackPricePaisa: 'sourcePackPricePaisa',
+}
+
+/** The owner set their own price for a unit the source file also prices. */
+export function hasPriceOverride(m: Medicine): boolean {
+  return SHOP_PRICE_FIELDS.some((f) => m[f] !== null && m[SOURCE_FOR[f]] !== null)
+}
+
+/** Edit input that drops the owner's price wherever the source has one (other shop prices stay). */
+export function withoutOverrides(m: Medicine): MedicineInput {
+  const input = medicineToInput(m)
+  for (const f of SHOP_PRICE_FIELDS) if (m[SOURCE_FOR[f]] !== null) input[f] = null
+  return input
+}
+
 /** Shop price changes between two versions — each becomes a medicinePriceHistory entry. */
 export function shopPriceChanges(
   before: Pick<Medicine, ShopPriceField> | null,

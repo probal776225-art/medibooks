@@ -10,6 +10,7 @@ import { useT, type MessageKey } from '../../i18n'
 import { useFormat } from '../../i18n/format'
 import { useDataStore } from '../../stores/data'
 import { DueText } from '../customers/parts'
+import { BackupReminder } from './BackupReminder'
 
 /** Today's transactions, live (Asia/Dhaka day). Re-subscribes when the date changes. */
 function useToday(): Transaction[] | null {
@@ -112,6 +113,8 @@ export function HomePage() {
           <Icon name="wallet" /> {t('nav.payment')}
         </Link>
       </div>
+
+      <BackupReminder />
 
       <div className="mt-6 flex items-baseline justify-between">
         <h2 className="text-lg font-semibold">{t('home.recent')}</h2>

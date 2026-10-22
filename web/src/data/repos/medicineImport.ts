@@ -2,7 +2,7 @@
 // changed rows get their source fields updated + price history. Shop prices, status and bills are never touched.
 import { doc, serverTimestamp, Timestamp } from 'firebase/firestore'
 import { newMedicineFields, type ImportField, type PlanItem } from '../../domain/medicineCsv'
-import { SCHEMA_VERSION, type Medicine } from '../../domain/types'
+import { SCHEMA_VERSION, type Medicine, type SourceName } from '../../domain/types'
 import { paths } from '../paths'
 import { auditInBatch, commitInBackground, newBatch, writeContext } from '../writer'
 
@@ -11,6 +11,8 @@ const TIME_FIELDS = new Set<ImportField>(['sourceUpdatedAt'])
 const MAX_OPS = 400
 
 export interface ImportFileInfo {
+  /** 'csv' for supplier files, 'medex' for the MedEx price file. */
+  sourceName?: SourceName
   fileName: string
   fileSha256: string
   counts: { new: number; changed: number; unchanged: number; errors: number }
@@ -73,9 +75,10 @@ export function applyMedicineImport(items: readonly PlanItem[], file: ImportFile
       for (const c of item.changes) {
         patch[c.field] = TIME_FIELDS.has(c.field) && typeof c.after === 'number' ? Timestamp.fromMillis(c.after) : c.after
       }
+      const source = { sourceName: item.record.sourceName, ...(item.record.sourceId ? { sourceId: item.record.sourceId } : {}) }
       batch.update(paths.medicine(item.medicine.id), {
         ...patch,
-        sourceName: 'csv',
+        ...source,
         sourceFetchedAt: fetchedAt,
         lastImportId: importId,
         sourceStatus: 'listed',
@@ -99,7 +102,7 @@ export function applyMedicineImport(items: readonly PlanItem[], file: ImportFile
       local.push({
         ...item.medicine,
         ...(Object.fromEntries(item.changes.map((c) => [c.field, c.after])) as Partial<Medicine>),
-        sourceName: 'csv',
+        ...source,
         sourceFetchedAt: ctx.now,
         lastImportId: importId,
         sourceStatus: 'listed',
@@ -110,7 +113,7 @@ export function applyMedicineImport(items: readonly PlanItem[], file: ImportFile
 
   room(2)
   batch.set(importRef, {
-    sourceName: 'csv',
+    sourceName: file.sourceName ?? 'csv',
     fileName: file.fileName,
     fileSha256: file.fileSha256,
     counts: file.counts,

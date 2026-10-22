@@ -4,7 +4,9 @@ import { makeMedicine } from './fixtures'
 import {
   advanceCursor,
   cleanMedicineInput,
+  hasPriceOverride,
   medicineToInput,
+  withoutOverrides,
   normalizeDosageForm,
   parsePackDescription,
   shopPriceChanges,
@@ -103,5 +105,21 @@ describe('sync cursor', () => {
     expect(advanceCursor(null, [])).toBeNull()
     expect(advanceCursor(null, [5, null, 9, 7])).toBe(9)
     expect(advanceCursor(20, [5, 9])).toBe(20)
+  })
+})
+
+describe('price overrides', () => {
+  it('is an override only where the source also has a price', () => {
+    const csv = makeMedicine({ sourceName: 'csv', sourceUnitPricePaisa: 200, sourceStripPricePaisa: null })
+    expect(hasPriceOverride(csv)).toBe(false)
+    expect(hasPriceOverride({ ...csv, shopStripPricePaisa: 2500 })).toBe(false)
+    expect(hasPriceOverride({ ...csv, shopUnitPricePaisa: 250 })).toBe(true)
+  })
+
+  it('clears only the overridden prices', () => {
+    const m = makeMedicine({ sourceUnitPricePaisa: 200, shopUnitPricePaisa: 250, shopStripPricePaisa: 2500 })
+    const input = withoutOverrides(m)
+    expect(input.shopUnitPricePaisa).toBeNull()
+    expect(input.shopStripPricePaisa).toBe(2500)
   })
 })

@@ -17,4 +17,8 @@ export const paths = {
   refMeta: (source: string) => doc(db, SHOP, 'refCatalog', source),
   refChunk: (source: string, chunkId: string) => doc(db, SHOP, 'refCatalog', source, 'chunks', chunkId),
   auditLog: () => collection(db, SHOP, 'auditLog'),
+  /** Any top-level shop collection by name (backup export / restore). */
+  shopCollection: (name: string) => collection(db, SHOP, name),
+  /** Progress of a restore, so one that stopped half-way can continue. */
+  restoreMarker: () => doc(db, SHOP, 'settings', 'restore'),
 }

@@ -91,7 +91,7 @@ export function ReportsPage() {
   function exportCsv() {
     if (!sum) return
     const csv = reportCsv({
-      title: `${t('app.shop')} — ${t('nav.reports')}`,
+      title: `${useDataStore.getState().settings.shop.name} — ${t('nav.reports')}`,
       rangeText: `${formatDate(range.start)} – ${formatDate(range.end - 1)}`,
       rows: [
         [t('rep.bakiGiven'), sum.bakiGivenPaisa, true],

@@ -1,4 +1,4 @@
-// Reference medicine list (MedEx file, used with written permission) stored as a few chunk docs:
+// Reference medicine list (MedEx files, used with written permission; prices optional) stored as a few chunk docs:
 //   shops/main/refCatalog/medex                 → meta (version, counts, file info)
 //   shops/main/refCatalog/medex/chunks/{v}-dict → dictionaries (forms, generics, companies)
 //   shops/main/refCatalog/medex/chunks/{v}-{n}  → packed rows, each < 1 MiB
@@ -24,6 +24,10 @@ export interface RefCatalogMeta {
   importedBy: string
   /** Owner ticked "I have MedEx's written permission" when uploading. */
   permissionConfirmed: boolean
+  /** The MedEx price file merged into this version (missing on older versions). */
+  priceFile?: { fileName: string; fileSha256: string; rows: number; importedAt: Millis } | null
+  /** Brands in this version that have a price. */
+  pricedCount?: number
 }
 
 const chunkIds = (version: string, count: number) => [
@@ -47,6 +51,8 @@ export function uploadRefCatalog(
   }
   batch.set(paths.refMeta(REF_SOURCE), {
     ...meta,
+    priceFile: meta.priceFile ?? null,
+    pricedCount: meta.pricedCount ?? 0,
     fileDate: meta.fileDate === null ? null : Timestamp.fromMillis(meta.fileDate),
     importedAt: Timestamp.fromMillis(meta.importedAt),
     serverAt: serverTimestamp(),
@@ -59,7 +65,14 @@ export function uploadRefCatalog(
       entity: 'refCatalog',
       entityId: REF_SOURCE,
       before: previous ? { version: previous.version, count: previous.count } : null,
-      after: { version: meta.version, count: meta.count, fileName: meta.fileName, permissionConfirmed: meta.permissionConfirmed },
+      after: {
+        version: meta.version,
+        count: meta.count,
+        fileName: meta.fileName,
+        priceFile: meta.priceFile?.fileName ?? null,
+        pricedCount: meta.pricedCount ?? 0,
+        permissionConfirmed: meta.permissionConfirmed,
+      },
     },
     ctx,
   )
@@ -83,6 +96,16 @@ export async function fetchRefMeta(): Promise<RefCatalogMeta | null> {
     importedAt: toMillis(d.importedAt) ?? 0,
     importedBy: String(d.importedBy ?? ''),
     permissionConfirmed: d.permissionConfirmed === true,
+    priceFile:
+      d.priceFile && typeof d.priceFile === 'object'
+        ? {
+            fileName: String(d.priceFile.fileName ?? ''),
+            fileSha256: String(d.priceFile.fileSha256 ?? ''),
+            rows: Number(d.priceFile.rows ?? 0),
+            importedAt: Number(d.priceFile.importedAt ?? 0),
+          }
+        : null,
+    pricedCount: Number(d.pricedCount ?? 0),
   }
 }
 

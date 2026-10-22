@@ -151,7 +151,10 @@ const csvCell = (v: string | number) => {
   const s = String(v)
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
-const taka = (p: Paisa) => (p / 100).toFixed(2)
+/** One CSV line (no line break). */
+export const csvLine = (values: readonly (string | number)[]) => values.map(csvCell).join(',')
+/** Taka with 2 decimals and English digits, so spreadsheets read it as a number. */
+export const taka = (p: Paisa) => (p / 100).toFixed(2)
 
 /** Plain CSV of the report (amounts in taka with 2 decimals, English digits for spreadsheets). */
 export function reportCsv(opts: {
@@ -168,5 +171,5 @@ export function reportCsv(opts: {
   for (const b of opts.buckets) lines.push([b.label, b.count, taka(b.paisa)])
   lines.push([], [opts.headings.name, opts.headings.mobile, opts.headings.due])
   for (const c of opts.top) lines.push([c.name, c.mobile, taka(c.paisa)])
-  return `${lines.map((l) => l.map(csvCell).join(',')).join('\n')}\n`
+  return `${lines.map(csvLine).join('\n')}\n`
 }

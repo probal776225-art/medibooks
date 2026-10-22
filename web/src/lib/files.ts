@@ -1,10 +1,11 @@
-// Small browser file helpers for imports.
+// Small browser file helpers for imports and backups.
 import Papa from 'papaparse'
 
 /** Save text as a file. CSVs get a UTF-8 BOM so Excel shows Bangla correctly. */
 export function downloadText(fileName: string, text: string): void {
   const bom = fileName.endsWith('.csv') ? '﻿' : ''
-  const url = URL.createObjectURL(new Blob([bom + text], { type: 'text/csv;charset=utf-8' }))
+  const type = fileName.endsWith('.json') ? 'application/json' : 'text/csv;charset=utf-8'
+  const url = URL.createObjectURL(new Blob([bom + text], { type }))
   const a = document.createElement('a')
   a.href = url
   a.download = fileName

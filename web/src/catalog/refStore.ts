@@ -1,5 +1,6 @@
 // Reference medicine list (MedEx file) on this device: Dexie copy + lazily built search index.
-// Lookup only — picking an item copies it into the shop's own medicine list, where the owner sets the price.
+// Lookup only — picking an item copies it into the shop's own medicine list (with the MedEx price as the source
+// price when the price file has one; the owner can still set their own).
 import MiniSearch from 'minisearch'
 import { useEffect, useMemo } from 'react'
 import { create } from 'zustand'
@@ -7,6 +8,7 @@ import { localDb } from '../data/localdb'
 import { fetchRefChunks, fetchRefMeta, uploadRefCatalog, type RefCatalogMeta } from '../data/repos/refCatalog'
 import { toEnglishDigits } from '../domain/digits'
 import { medicineKey } from '../domain/medicines'
+import { carryRefPrices, hasRefPrice } from './import/medexPrices'
 import { mapMedexSheets, type MedexParseResult, type RefMedicine } from './import/medexRef'
 import { packRefCatalog, sha256Hex, unpackRefCatalog } from './import/refPack'
 import { readXlsx } from './import/xlsx'
@@ -37,7 +39,8 @@ async function loadLocalMeta(): Promise<RefCatalogMeta | null> {
   return row?.key === 'refCatalogMeta' ? row.value : null
 }
 
-async function saveLocal(items: RefMedicine[], meta: RefCatalogMeta): Promise<void> {
+/** Replace this device's copy (Dexie) with a version just uploaded or downloaded. */
+export async function saveLocal(items: RefMedicine[], meta: RefCatalogMeta): Promise<void> {
   await localDb.transaction('rw', localDb.refCatalog, localDb.meta, async () => {
     await localDb.refCatalog.clear()
     await localDb.refCatalog.bulkPut(items)
@@ -140,9 +143,11 @@ export async function previewRefFile(file: File): Promise<RefImportPreview> {
 
 /** Upload (queued offline) and keep a copy on this device; other devices download it on their next sync. */
 export async function confirmRefImport(preview: RefImportPreview, permissionConfirmed: boolean): Promise<RefCatalogMeta> {
-  const packed = packRefCatalog(preview.parsed.items)
   // Prefer the server's current version so its old chunks get removed, even if this device never downloaded it.
   const previous = await fetchRefMeta().catch(() => useRefStore.getState().meta)
+  // A new brand list keeps the prices of the old one (MedEx price file).
+  const items = carryRefPrices(preview.parsed.items, await localDb.refCatalog.toArray())
+  const packed = packRefCatalog(items)
   const meta = uploadRefCatalog(
     packed,
     {
@@ -150,12 +155,14 @@ export async function confirmRefImport(preview: RefImportPreview, permissionConf
       fileName: preview.file.name,
       fileSha256: preview.sha256,
       fileDate: preview.file.lastModified || null,
-      count: preview.parsed.items.length,
+      count: items.length,
       herbalCount: preview.parsed.herbalCount,
       permissionConfirmed,
+      priceFile: previous?.priceFile ?? null,
+      pricedCount: items.filter(hasRefPrice).length,
     },
     previous,
   )
-  await saveLocal(preview.parsed.items, meta)
+  await saveLocal(items, meta)
   return meta
 }

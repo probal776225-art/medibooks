@@ -58,6 +58,8 @@ export interface MedicineSourceInfo {
   sourceUpdatedAt: Millis | null
   sourceFetchedAt: Millis | null
   lastImportId: string | null
+  /** Prices from the reference list (MedEx price file), stored as source prices — never as shop prices. */
+  prices?: { unit: Paisa | null; strip: Paisa | null; pack: Paisa | null }
 }
 
 const ts = (ms: Millis | null) => (ms === null ? null : Timestamp.fromMillis(ms))
@@ -70,9 +72,9 @@ export function createMedicine(raw: MedicineInput, source?: MedicineSourceInfo):
     id: ref.id,
     ...input,
     dosageText: source?.dosageText ?? input.dosageForm,
-    sourceUnitPricePaisa: null,
-    sourceStripPricePaisa: null,
-    sourcePackPricePaisa: null,
+    sourceUnitPricePaisa: source?.prices?.unit ?? null,
+    sourceStripPricePaisa: source?.prices?.strip ?? null,
+    sourcePackPricePaisa: source?.prices?.pack ?? null,
     sourceName: source?.sourceName ?? 'manual',
     sourceId: source?.sourceId ?? null,
     sourceUpdatedAt: source?.sourceUpdatedAt ?? null,

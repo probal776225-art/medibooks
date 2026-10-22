@@ -6,9 +6,12 @@ import { useCatalogStore } from '../../catalog/store'
 import { Icon } from '../../components/Icon'
 import { medicineDisplayName } from '../../domain/pricing'
 import { useT } from '../../i18n'
+import { useFormat } from '../../i18n/format'
+import { refPriceText } from './refPrice'
 
 export function RefResults({ query, onPick, limit = 6 }: { query: string; onPick: (r: RefMedicine) => void; limit?: number }) {
   const t = useT()
+  const f = useFormat()
   const medicines = useCatalogStore((s) => s.medicines)
   const hasList = useRefStore((s) => s.meta !== null)
   const indexing = useRefStore((s) => s.indexing || (s.meta !== null && s.index === null))
@@ -30,30 +33,36 @@ export function RefResults({ query, onPick, limit = 6 }: { query: string; onPick
     <div>
       <p className="px-3 pt-3 pb-1 text-xs font-semibold tracking-wide text-slate-500 uppercase">{t('ref.section')}</p>
       <ul className="divide-y divide-slate-100">
-        {results.map((r) => (
-          <li key={r.id}>
-            <button
-              type="button"
-              onClick={() => onPick(r)}
-              className="flex min-h-14 w-full items-center gap-3 px-3 py-2 text-left hover:bg-amber-50"
-            >
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-medium">
-                  {medicineDisplayName(r)}
-                  {r.herbal && (
-                    <span className="ml-2 rounded bg-lime-100 px-1.5 py-0.5 text-xs text-lime-800">{t('ref.herbal')}</span>
-                  )}
+        {results.map((r) => {
+          const price = refPriceText(r, f.money, t('med.piece'))
+          return (
+            <li key={r.id}>
+              <button
+                type="button"
+                onClick={() => onPick(r)}
+                className="flex min-h-14 w-full items-center gap-3 px-3 py-2 text-left hover:bg-amber-50"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">
+                    {medicineDisplayName(r)}
+                    {r.herbal && (
+                      <span className="ml-2 rounded bg-lime-100 px-1.5 py-0.5 text-xs text-lime-800">{t('ref.herbal')}</span>
+                    )}
+                  </span>
+                  <span className="block truncate text-sm text-slate-500">
+                    {[r.genericName, r.manufacturer].filter(Boolean).join(' · ')}
+                  </span>
                 </span>
-                <span className="block truncate text-sm text-slate-500">
-                  {[r.genericName, r.manufacturer].filter(Boolean).join(' · ')}
+                <span className="shrink-0 text-right text-sm">
+                  {price && <span className="block font-semibold text-slate-700 tabular-nums">{price}</span>}
+                  <span className="flex items-center justify-end gap-1 font-semibold text-teal-800">
+                    <Icon name="plus" className="size-4" /> {t('ref.add')}
+                  </span>
                 </span>
-              </span>
-              <span className="flex shrink-0 items-center gap-1 text-sm font-semibold text-teal-800">
-                <Icon name="plus" className="size-4" /> {t('ref.add')}
-              </span>
-            </button>
-          </li>
-        ))}
+              </button>
+            </li>
+          )
+        })}
       </ul>
     </div>
   )
