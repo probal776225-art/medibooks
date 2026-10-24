@@ -7,6 +7,7 @@ import { create } from 'zustand'
 import { localDb } from '../data/localdb'
 import { fetchRefChunks, fetchRefMeta, uploadRefCatalog, type RefCatalogMeta } from '../data/repos/refCatalog'
 import { toEnglishDigits } from '../domain/digits'
+import { genericKey } from '../domain/alternatives'
 import { medicineKey } from '../domain/medicines'
 import { carryRefPrices, hasRefPrice } from './import/medexPrices'
 import { mapMedexSheets, type MedexParseResult, type RefMedicine } from './import/medexRef'
@@ -20,6 +21,8 @@ interface RefState {
   downloading: boolean
   index: RefIndex | null
   byId: Map<string, RefMedicine>
+  /** genericKey → rows, for same-generic alternatives (built with the search index). */
+  byGeneric: Map<string, RefMedicine[]>
   indexing: boolean
 }
 
@@ -28,6 +31,7 @@ export const useRefStore = create<RefState>()(() => ({
   downloading: false,
   index: null,
   byId: new Map(),
+  byGeneric: new Map(),
   indexing: false,
 }))
 
@@ -46,7 +50,7 @@ export async function saveLocal(items: RefMedicine[], meta: RefCatalogMeta): Pro
     await localDb.meta.put({ key: 'refCatalogMeta', value: meta })
   })
   // Drop the old index; it is rebuilt on the next search.
-  useRefStore.setState({ meta, index: null, byId: new Map() })
+  useRefStore.setState({ meta, index: null, byId: new Map(), byGeneric: new Map() })
 }
 
 /** Download a newer list from the server if there is one (called after each medicine sync). */
@@ -69,10 +73,11 @@ export async function refreshRefCatalog(): Promise<void> {
 
 export function resetRefCatalog(): void {
   loaded = false
-  useRefStore.setState({ meta: null, downloading: false, index: null, byId: new Map(), indexing: false })
+  useRefStore.setState({ meta: null, downloading: false, index: null, byId: new Map(), byGeneric: new Map(), indexing: false })
 }
 
-async function ensureIndex(): Promise<void> {
+/** Load the list into memory (search index + generic groups) once; later calls are free. */
+export async function ensureIndex(): Promise<void> {
   const s = useRefStore.getState()
   if (s.index || s.indexing || !s.meta) return
   useRefStore.setState({ indexing: true })
@@ -90,7 +95,15 @@ async function ensureIndex(): Promise<void> {
       },
     })
     index.addAll(items)
-    useRefStore.setState({ index, byId: new Map(items.map((i) => [i.id, i])) })
+    const byGeneric = new Map<string, RefMedicine[]>()
+    for (const r of items) {
+      const g = genericKey(r.genericName)
+      if (!g) continue
+      const list = byGeneric.get(g)
+      if (list) list.push(r)
+      else byGeneric.set(g, [r])
+    }
+    useRefStore.setState({ index, byId: new Map(items.map((i) => [i.id, i])), byGeneric })
   } finally {
     useRefStore.setState({ indexing: false })
   }

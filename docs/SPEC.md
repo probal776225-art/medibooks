@@ -172,6 +172,11 @@ Full design: `docs/ARCHITECTURE.md` §0, §5, §6. Kaggle is **not** used.
 - Settings shows how many photos are stored and how much of the free space they use.
 - Photos are part of the JSON backup and restore; when the customer's mobile number changes, the photos move too.
 
+## 15b. Same-generic alternatives and the full medicine list (2026-10-24)
+- ওষুধ → **সব ওষুধ** (default): the shop's medicines and the whole MedEx list together; no "যোগ করুন" step. A MedEx medicine opens, sells and (owner) edits like a shop one and joins the shop list the first time it is used.
+- Medicine page → **একই জেনেরিক / বিকল্প**: direct alternatives (same generic + strength + form, cheapest first) and other strengths/forms, with prices; tap to open.
+- Bill line → **বিকল্প**: pick another brand to replace the line (price updates). Works offline. A note reminds to check with the prescription and the patient.
+
 ## 16. Staff accounts (Phase 14)
 - Settings → **স্টাফ**: add a staff member (name, email, password), turn a staff member off/on.
 - Staff sign in on their own phone/PC (with their own PIN). They can find/add customers, make a New Invoice (নতুন বাকি), take a payment, add/view prescription photos and add a medicine from the MedEx list.

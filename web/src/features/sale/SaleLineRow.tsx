@@ -1,8 +1,11 @@
 import { useState } from 'react'
-import { editMedicine, useCatalogStore } from '../../catalog/store'
+import { editMedicine, shopMedicineFor, useCatalogStore } from '../../catalog/store'
+import { useRefStore } from '../../catalog/refStore'
+import type { AltItem } from '../../domain/alternatives'
+import { AlternativesList } from '../medicines/Alternatives'
 import { useIsOwner } from '../../stores/role'
 import { Icon } from '../../components/Icon'
-import { TextInput } from '../../components/ui'
+import { Modal, TextInput } from '../../components/ui'
 import { medicineToInput, type ShopPriceField } from '../../domain/medicines'
 import { parseMoney } from '../../domain/money'
 import { medicineDisplayName, sellableUnits } from '../../domain/pricing'
@@ -34,6 +37,17 @@ export function SaleLineRow({
   const m = useCatalogStore((s) => (line.medicineId ? s.byId.get(line.medicineId) : undefined))
   const showToast = useToastStore((s) => s.show)
   const [showDiscount, setShowDiscount] = useState(line.discountText !== '')
+  const [showAlt, setShowAlt] = useState(false)
+
+  /** Swap this line to another brand of the same generic (a MedEx row becomes a shop medicine first). */
+  function swapTo(x: AltItem) {
+    const ref = x.kind === 'ref' ? useRefStore.getState().byId.get(x.id) : undefined
+    const next = x.kind === 'shop' ? useCatalogStore.getState().byId.get(x.id) : ref ? shopMedicineFor(ref) : undefined
+    if (!next) return
+    const unit = line.unit !== 'custom' && sellableUnits(next).some((u) => u.unit === line.unit) ? line.unit : 'piece'
+    patchLine(line.key, { medicineId: next.id, unit, priceText: defaultPriceText(next, unit) })
+    setShowAlt(false)
+  }
 
   const units: { unit: SaleUnit; label: string }[] = m
     ? [
@@ -83,6 +97,11 @@ export function SaleLineRow({
             />
           )}
           {m && <p className="truncate text-sm text-slate-500">{[m.genericName, m.manufacturer].filter(Boolean).join(' · ')}</p>}
+          {m && m.genericName && (
+            <button type="button" onClick={() => setShowAlt(true)} className="min-h-9 text-sm font-medium text-teal-700 underline">
+              {t('alt.button')}
+            </button>
+          )}
         </div>
         <button
           type="button"
@@ -182,6 +201,14 @@ export function SaleLineRow({
         )}
       </div>
       {error && <p className="mt-1 text-sm text-rose-600">{t(`error.${error}` as MessageKey)}</p>}
+      {showAlt && m && (
+        <Modal title={`${t('alt.title')} · ${medicineDisplayName(m)}`} onClose={() => setShowAlt(false)}>
+          <AlternativesList
+            target={{ id: m.id, medexId: m.sourceName === 'medex' ? m.sourceId : null, genericName: m.genericName, strength: m.strength, dosageForm: m.dosageForm }}
+            onPick={swapTo}
+          />
+        </Modal>
+      )}
     </li>
   )
 }

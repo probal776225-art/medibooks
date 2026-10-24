@@ -123,6 +123,10 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 
 ## 9. Oshudh ar dam
 
+- **ওষুধ → সব ওষুধ:** dokaner oshudh ar MedEx er sob oshudh ek sathe. MedEx er oshudh ("MedEx" chinho) alada kore jog korte hoy na — bill e sorasori tola jay; prothombar bikri ba **এডিট** korle nijei dokaner list e uthe jay.
+- **একই জেনেরিক / বিকল্প:** oshudher page e niche dekhabe eki generic ar strength er onno brand (sostar ta age), ar onno strength/dhoron. Bill e protiti line e **বিকল্প** chapleo list ashe; ekta bechhe nile line bodle jay, dam o. Internet chara o kaj kore.
+- Bikolpo deyar age daktar er lekha ar rogi er sathe miliye nin.
+
 - **Nijer dam:** ওষুধ → oshudh → এডিট → dam. Import e apnar dam kokhono bodlay na.
 - **Supplier er dam er file (CSV):** সেটিংস → ইমপোর্ট → ওষুধের দামের ফাইল.
 - **MedEx dam er file (CSV):** সেটিংস → ইমপোর্ট → **MedEx দামের ফাইল** → file → ki bodlabe dekhe → onumoti tick → **দাম ইমপোর্ট করুন**. Puro file pele abar ekhanei din.

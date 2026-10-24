@@ -223,9 +223,9 @@ export const bn = {
   'med.syncing': 'সিঙ্ক হচ্ছে…',
   'med.synced': 'শেষ সিঙ্ক {time}',
   'med.syncOffline': 'অফলাইন — এই ডিভাইসে রাখা তালিকা দেখাচ্ছে',
-  'med.filter.active': 'চালু',
+  'med.filter.active': 'দোকানের তালিকা',
   'med.filter.inactive': 'বিক্রি বন্ধ',
-  'med.filter.all': 'সব',
+  'med.filter.all': 'দোকানের সব',
   'med.filter.override': 'নিজের দাম',
   'med.filter.manual': 'নিজে যোগ করা',
   'med.saved': 'ওষুধ সেভ হয়েছে',
@@ -623,6 +623,16 @@ export const bn = {
   'staff.noAccessText': 'এই অ্যাকাউন্টে দোকানের হিসাব দেখার অনুমতি নেই। মালিককে বলুন স্টাফ হিসেবে যোগ করতে।',
   'staff.addMedPriced': 'MedEx দাম: {price}। দোকানের দাম মালিক ঠিক করবেন; বিলে দাম হাতে বদলাতে পারবেন।',
   'staff.addMedNoPrice': 'এই ওষুধের দাম নেই — বিলে দাম লিখে দিন। দোকানের দাম মালিক ঠিক করবেন।',
+  'med.filter.catalog': 'সব ওষুধ',
+  'alt.button': 'বিকল্প',
+  'alt.title': 'একই জেনেরিক / বিকল্প',
+  'alt.same': 'সরাসরি বিকল্প — {generic} {strength}',
+  'alt.other': 'একই জেনেরিক, অন্য শক্তি বা ধরন',
+  'alt.none': 'একই জেনেরিক আর শক্তির অন্য ব্র্যান্ড পাওয়া যায়নি।',
+  'alt.noGeneric': 'এই ওষুধের জেনেরিক নাম নেই, তাই বিকল্প খোঁজা যাচ্ছে না। এডিট করে জেনেরিক দিন।',
+  'alt.note': 'বিকল্প দেওয়ার আগে ডাক্তারের লেখা আর রোগীর সাথে মিলিয়ে নিন।',
+  'alt.medexList': 'MedEx তালিকা',
+  'alt.medexNote': 'MedEx তালিকা থেকে — বিক্রি বা এডিট করলে দোকানের তালিকায় উঠে যাবে',
 } as const
 
 export type MessageKey = keyof typeof bn

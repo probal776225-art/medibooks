@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ROUTES } from '../../app/routes'
-import { changeMedicineStatus, editMedicine, useCatalogStore } from '../../catalog/store'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { medicinePath, ROUTES } from '../../app/routes'
+import { refUrl, type RefMedicine } from '../../catalog/import/medexRef'
+import { ensureIndex, useRefStore } from '../../catalog/refStore'
+import { changeMedicineStatus, editMedicine, shopMedicineFor, useCatalogStore } from '../../catalog/store'
 import { Icon } from '../../components/Icon'
 import { Button, buttonClass, Card } from '../../components/ui'
 import { fetchPriceHistory, type PriceHistoryRow } from '../../data/repos/medicines'
+import { isRefMedicineId, REF_MEDICINE_PREFIX, refAsMedicine } from '../../domain/alternatives'
 import { hasPriceOverride, withoutOverrides } from '../../domain/medicines'
 import { medicineDisplayName, sellableUnits, type UnitOption } from '../../domain/pricing'
 import type { Medicine } from '../../domain/types'
@@ -12,6 +15,7 @@ import { useT, type MessageKey } from '../../i18n'
 import { useFormat } from '../../i18n/format'
 import { useIsOwner } from '../../stores/role'
 import { useToastStore } from '../../stores/toast'
+import { AlternativesList } from './Alternatives'
 import { MedicineForm } from './MedicineForm'
 
 function unitLabel(t: ReturnType<typeof useT>, u: UnitOption): string {
@@ -72,25 +76,52 @@ function PriceHistory({ medicineId, version }: { medicineId: string; version: nu
 }
 
 export function MedicineDetailPage() {
-  const t = useT()
-  const f = useFormat()
   const { id = '' } = useParams()
+  return isRefMedicineId(id) ? <RefMedicinePage medexId={id.slice(REF_MEDICINE_PREFIX.length)} /> : <ShopMedicinePage id={id} />
+}
+
+function NotFound({ loading }: { loading: boolean }) {
+  const t = useT()
+  return (
+    <section className="mx-auto max-w-xl">
+      <p className="mt-6 text-center text-slate-500">{loading ? t('app.loading') : t('med.notExist')}</p>
+      <Link to={ROUTES.medicines} className={buttonClass('ghost', 'mt-4 w-full')}>
+        {t('med.back')}
+      </Link>
+    </section>
+  )
+}
+
+function ShopMedicinePage({ id }: { id: string }) {
   const m = useCatalogStore((s) => s.byId.get(id))
   const status = useCatalogStore((s) => s.status)
+  return m ? <MedicineView m={m} /> : <NotFound loading={status !== 'ready'} />
+}
+
+/** A MedEx list row the shop has not used yet: shown like a shop medicine; selling or editing it adds it. */
+function RefMedicinePage({ medexId }: { medexId: string }) {
+  const shop = useCatalogStore((s) => s.medicines.find((x) => x.sourceName === 'medex' && x.sourceId === medexId))
+  const { byId, meta, index } = useRefStore()
+  useEffect(() => {
+    if (meta && !index) void ensureIndex()
+  }, [meta, index])
+  const r = byId.get(medexId)
+  const v = useMemo(() => (r ? refAsMedicine(r, refUrl(r), Date.now()) : null), [r])
+  if (shop) return <Navigate to={medicinePath(shop.id)} replace />
+  return v && r ? <MedicineView m={v} refRow={r} /> : <NotFound loading={meta !== null && index === null} />
+}
+
+function MedicineView({ m, refRow }: { m: Medicine; refRow?: RefMedicine }) {
+  const t = useT()
+  const f = useFormat()
+  const navigate = useNavigate()
   const showToast = useToastStore((s) => s.show)
   const [editing, setEditing] = useState(false)
   const isOwner = useIsOwner()
-
-  if (!m) {
-    return (
-      <section className="mx-auto max-w-xl">
-        <p className="mt-6 text-center text-slate-500">{status === 'ready' ? t('med.notExist') : t('app.loading')}</p>
-        <Link to={ROUTES.medicines} className={buttonClass('ghost', 'mt-4 w-full')}>
-          {t('med.back')}
-        </Link>
-      </section>
-    )
-  }
+  const target = useMemo(
+    () => ({ id: m.id, medexId: m.sourceName === 'medex' ? m.sourceId : null, genericName: m.genericName, strength: m.strength, dosageForm: m.dosageForm }),
+    [m],
+  )
 
   return (
     <section className="mx-auto max-w-2xl space-y-4">
@@ -105,6 +136,13 @@ export function MedicineDetailPage() {
             initial={m}
             submitLabel={t('customer.save')}
             onSubmit={(input) => {
+              if (refRow) {
+                // Editing a MedEx row saves it as a shop medicine with the owner's changes.
+                const saved = shopMedicineFor(refRow, input)
+                showToast('success', 'med.saved')
+                navigate(medicinePath(saved.id), { replace: true })
+                return
+              }
               editMedicine(m, input)
               setEditing(false)
               showToast('success', 'med.saved')
@@ -121,13 +159,17 @@ export function MedicineDetailPage() {
               {m.manufacturer && <p className="text-slate-500">{m.manufacturer}</p>}
               {m.packDescription && <p className="text-sm text-slate-500">{m.packDescription}</p>}
             </div>
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                m.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
-              }`}
-            >
-              {m.status === 'active' ? t('med.activeLabel') : t('med.inactiveLabel')}
-            </span>
+            {refRow ? (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">{t('alt.medexList')}</span>
+            ) : (
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  m.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
+                }`}
+              >
+                {m.status === 'active' ? t('med.activeLabel') : t('med.inactiveLabel')}
+              </span>
+            )}
           </div>
 
           <h2 className="mt-4 text-sm font-semibold text-slate-500">{t('med.prices')}</h2>
@@ -148,7 +190,8 @@ export function MedicineDetailPage() {
           </ul>
 
           <p className="mt-3 text-sm text-slate-500">
-            {t('med.source')}: {t(`med.source.${m.sourceName}` as MessageKey)}
+            {refRow ? t('alt.medexNote') : t('med.source')}
+            {!refRow && `: ${t(`med.source.${m.sourceName}` as MessageKey)}`}
             {m.sourceFetchedAt ? ` · ${f.date(m.sourceFetchedAt)}` : ''}
           </p>
 
@@ -158,7 +201,7 @@ export function MedicineDetailPage() {
                 {t('customer.edit')}
               </Button>
             )}
-            {isOwner && hasPriceOverride(m) && (
+            {isOwner && !refRow && hasPriceOverride(m) && (
               <Button
                 variant="ghost"
                 className="border border-slate-200"
@@ -179,9 +222,17 @@ export function MedicineDetailPage() {
         </Card>
       )}
 
-      <PriceHistory medicineId={m.id} version={m.updatedAt} />
+      <Card>
+        <h2 className="mb-2 font-semibold">{t('alt.title')}</h2>
+        <AlternativesList
+          target={target}
+          onPick={(x) => navigate(medicinePath(x.kind === 'shop' ? x.id : `${REF_MEDICINE_PREFIX}${x.id}`))}
+        />
+      </Card>
 
-      {isOwner && (
+      {!refRow && <PriceHistory medicineId={m.id} version={m.updatedAt} />}
+
+      {isOwner && !refRow && (
         <Button
           variant="ghost"
           className="w-full border border-slate-200"

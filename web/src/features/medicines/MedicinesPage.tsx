@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { medicinePath } from '../../app/routes'
-import type { RefMedicine } from '../../catalog/import/medexRef'
+import { refUrl } from '../../catalog/import/medexRef'
+import { ensureIndex, refKey, useRefSearch, useRefStore } from '../../catalog/refStore'
+import { isRefMedicineId, refAsMedicine } from '../../domain/alternatives'
 import { syncMedicines, useCatalogStore, useMedicineSearch } from '../../catalog/store'
 import { Icon } from '../../components/Icon'
 import { Button, TextInput } from '../../components/ui'
@@ -10,11 +12,12 @@ import type { Medicine } from '../../domain/types'
 import { useT, type MessageKey } from '../../i18n'
 import { useFormat } from '../../i18n/format'
 import { MedicineLine } from './parts'
-import { RefResults } from './RefResults'
 import { QuickAddMedicine } from './QuickAddMedicine'
 
-type StatusFilter = 'active' | 'inactive' | 'all' | 'override' | 'manual'
+type StatusFilter = 'catalog' | 'active' | 'inactive' | 'all' | 'override' | 'manual'
 const FILTERS: { id: StatusFilter; label: MessageKey }[] = [
+  // Every medicine: the shop's own + the whole MedEx list (a MedEx row opens, sells and edits like a shop one).
+  { id: 'catalog', label: 'med.filter.catalog' },
   { id: 'active', label: 'med.filter.active' },
   { id: 'inactive', label: 'med.filter.inactive' },
   { id: 'all', label: 'med.filter.all' },
@@ -25,6 +28,7 @@ const isFilter = (v: string | null): v is StatusFilter => FILTERS.some((x) => x.
 
 function matchesFilter(m: Medicine, filter: StatusFilter): boolean {
   if (filter === 'all') return true
+  if (filter === 'catalog') return m.status === 'active'
   if (filter === 'override') return hasPriceOverride(m)
   if (filter === 'manual') return m.sourceName === 'manual'
   return m.status === filter
@@ -61,15 +65,45 @@ export function MedicinesPage() {
   // Settings links here with ?show=override or ?show=manual.
   const [params] = useSearchParams()
   const showParam = params.get('show')
-  const [filter, setFilter] = useState<StatusFilter>(isFilter(showParam) ? showParam : 'active')
+  const [filter, setFilter] = useState<StatusFilter>(isFilter(showParam) ? showParam : 'catalog')
   const [shown, setShown] = useState(PAGE)
-  const [adding, setAdding] = useState<{ name?: string; reference?: RefMedicine } | null>(null)
+  const [adding, setAdding] = useState<{ name?: string } | null>(null)
 
-  const searched = useMedicineSearch(query, { includeInactive: filter !== 'active', limit: 300 })
-  const rows: Medicine[] = useMemo(() => {
+  const searched = useMedicineSearch(query, { includeInactive: filter !== 'active' && filter !== 'catalog', limit: 300 })
+  const shopRows: Medicine[] = useMemo(() => {
     const base = query.trim() ? searched : all
     return base.filter((m) => matchesFilter(m, filter))
   }, [all, searched, query, filter])
+
+  // MedEx rows the shop has not used yet (by MedEx id, or same name + strength + form).
+  const { byId: refById, meta: refMeta, index: refIndex } = useRefStore()
+  useEffect(() => {
+    if (filter === 'catalog' && refMeta && !refIndex) void ensureIndex()
+  }, [filter, refMeta, refIndex])
+  const owned = useMemo(
+    () => ({
+      ids: new Set(all.filter((m) => m.sourceName === 'medex' && m.sourceId).map((m) => m.sourceId!)),
+      keys: new Set(all.map(refKey)),
+    }),
+    [all],
+  )
+  const refFound = useRefSearch(filter === 'catalog' ? query : '', owned, 60)
+  const refAll = useMemo(() => {
+    if (filter !== 'catalog') return []
+    const now = Date.now()
+    return [...refById.values()]
+      .filter((r) => !owned.ids.has(r.id) && !owned.keys.has(refKey(r)))
+      .map((r) => refAsMedicine(r, refUrl(r), now))
+  }, [filter, refById, owned])
+  const rows: Medicine[] = useMemo(() => {
+    if (filter !== 'catalog') return shopRows
+    if (query.trim()) {
+      const now = Date.now()
+      return [...shopRows, ...refFound.map((r) => refAsMedicine(r, refUrl(r), now))]
+    }
+    const byName = new Intl.Collator('en', { sensitivity: 'base' })
+    return [...shopRows, ...refAll].sort((a, b) => byName.compare(a.brandName, b.brandName))
+  }, [filter, shopRows, refFound, refAll, query])
 
   return (
     <section className="mx-auto max-w-4xl">
@@ -129,8 +163,9 @@ export function MedicinesPage() {
           <ul className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             {rows.slice(0, shown).map((m) => (
               <li key={m.id}>
-                <Link to={medicinePath(m.id)} className="flex min-h-14 items-center px-4 py-2 hover:bg-slate-50">
+                <Link to={medicinePath(m.id)} className="flex min-h-14 items-center gap-2 px-4 py-2 hover:bg-slate-50">
                   <MedicineLine medicine={m} />
+                  {isRefMedicineId(m.id) && <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800">MedEx</span>}
                 </Link>
               </li>
             ))}
@@ -143,16 +178,9 @@ export function MedicinesPage() {
         </>
       )}
 
-      {query.trim() && (
-        <div className="mt-3 overflow-hidden rounded-2xl border border-amber-200 bg-white empty:hidden">
-          <RefResults query={query} limit={8} onPick={(reference) => setAdding({ reference })} />
-        </div>
-      )}
-
       {adding !== null && (
         <QuickAddMedicine
           initialName={adding.name}
-          reference={adding.reference}
           onClose={() => setAdding(null)}
           onAdded={(m) => {
             setAdding(null)

@@ -12,7 +12,9 @@ import {
 } from '../data/repos/medicines'
 import { advanceCursor, syncQueryStart, type MedicineInput } from '../domain/medicines'
 import type { Medicine, MedicineStatus, Millis } from '../domain/types'
-import { refreshRefCatalog, resetRefCatalog } from './refStore'
+import { refAsMedicine } from '../domain/alternatives'
+import { refUrl, type RefMedicine } from './import/medexRef'
+import { refreshRefCatalog, resetRefCatalog, useRefStore } from './refStore'
 import { buildMedicineIndex, searchMedicines, type MedicineIndex, type SearchOptions } from './searchIndex'
 
 interface CatalogState {
@@ -170,6 +172,42 @@ export function upsertLocalMany(meds: readonly Medicine[]): void {
   const byId = new Map(useCatalogStore.getState().byId)
   for (const m of meds) byId.set(m.id, m)
   setList([...byId.values()])
+}
+
+/**
+ * The shop medicine for a MedEx list row: the existing one (same MedEx id) or a new one created now with the
+ * MedEx name, pack and price as its source fields (works offline; the write syncs later). The owner can edit it.
+ */
+export function shopMedicineFor(r: RefMedicine, edited?: MedicineInput): Medicine {
+  const existing = useCatalogStore.getState().medicines.find((m) => m.sourceName === 'medex' && m.sourceId === r.id)
+  if (existing) return edited ? editMedicine(existing, edited) : existing
+  const v = refAsMedicine(r, refUrl(r), Date.now())
+  const meta = useRefStore.getState().meta
+  return addMedicine(
+    edited ?? {
+      brandName: v.brandName,
+      genericName: v.genericName,
+      strength: v.strength,
+      dosageForm: v.dosageForm,
+      manufacturer: v.manufacturer,
+      packDescription: v.packDescription,
+      piecesPerStrip: v.piecesPerStrip,
+      piecesPerPack: v.piecesPerPack,
+      shopUnitPricePaisa: null,
+      shopStripPricePaisa: null,
+      shopPackPricePaisa: null,
+      sourceUrl: v.sourceUrl,
+    },
+    {
+      sourceName: 'medex',
+      sourceId: r.id,
+      dosageText: r.dosageForm,
+      sourceUpdatedAt: meta?.fileDate ?? null,
+      sourceFetchedAt: meta?.importedAt ?? null,
+      lastImportId: meta?.version ?? null,
+      prices: { unit: v.sourceUnitPricePaisa, strip: v.sourceStripPricePaisa, pack: v.sourcePackPricePaisa },
+    },
+  )
 }
 
 // Actions used by the screens: write to Firestore (queued offline) and update this device at once.

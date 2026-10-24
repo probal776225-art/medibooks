@@ -1,8 +1,7 @@
 // নতুন বাকি — the most-used screen (SPEC §4). Everything is local first; save is one offline-safe batch.
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import type { RefMedicine } from '../../catalog/import/medexRef'
-import { recordMedicineUsage, useCatalogStore } from '../../catalog/store'
+import { recordMedicineUsage, shopMedicineFor, useCatalogStore } from '../../catalog/store'
 import { Icon } from '../../components/Icon'
 import { Button, Card, TextInput } from '../../components/ui'
 import { saveTransaction } from '../../data/repos/transactions'
@@ -33,7 +32,7 @@ export function NewSalePage() {
   const byMobile = useDataStore((s) => s.byMobile)
   const roundToTaka = useDataStore((s) => s.settings.billing.roundToTaka)
   const medicines = useCatalogStore((s) => s.byId)
-  const [adding, setAdding] = useState<{ name?: string; reference?: RefMedicine } | null>(null)
+  const [adding, setAdding] = useState<{ name?: string } | null>(null)
   const [tried, setTried] = useState(false)
   const [saveError, setSaveError] = useState<MessageKey | null>(null)
   const [saved, setSaved] = useState<TransactionDraft | null>(null)
@@ -172,7 +171,7 @@ export function NewSalePage() {
                 autoFocus={Boolean(customer)}
                 onSelect={(m) => addMedicineLine(m)}
                 onAddNew={(name) => setAdding({ name })}
-                onPickReference={(reference) => setAdding({ reference })}
+                onPickReference={(reference) => addMedicineLine(shopMedicineFor(reference))}
               />
               <button
                 type="button"
@@ -240,7 +239,6 @@ export function NewSalePage() {
       {adding && (
         <QuickAddMedicine
           initialName={adding.name}
-          reference={adding.reference}
           onClose={() => setAdding(null)}
           onAdded={(m) => {
             setAdding(null)
