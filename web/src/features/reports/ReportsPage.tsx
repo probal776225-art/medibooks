@@ -22,6 +22,8 @@ import { downloadText } from '../../lib/files'
 import { useT, type MessageKey } from '../../i18n'
 import { useFormat } from '../../i18n/format'
 import { useDataStore } from '../../stores/data'
+import { useIsStaff, useRoleStore } from '../../stores/role'
+import { subscribeMembers, type Member } from '../../data/repos/members'
 import { PngPreviewDialog } from '../print/PngPreviewDialog'
 import { ReportImage } from '../print/PrintTemplates'
 
@@ -56,6 +58,11 @@ export function ReportsPage() {
   const [badRange, setBadRange] = useState(false)
   const [data, setData] = useState<{ txns: Transaction[]; fromCache: boolean } | null>(null)
   const [showImage, setShowImage] = useState(false)
+  const isStaff = useIsStaff()
+  const ownerUid = useRoleStore((s) => (s.role === 'owner' ? s.uid : null))
+  const [members, setMembers] = useState<Member[]>([])
+  const [who, setWho] = useState<string>('all')
+  useEffect(() => (ownerUid ? subscribeMembers(setMembers, () => setMembers([])) : undefined), [ownerUid])
 
   useEffect(() => {
     let alive = true
@@ -80,7 +87,12 @@ export function ReportsPage() {
     if (r) setRange(r)
   }
 
-  const sum = useMemo(() => (data ? summarize(data.txns) : null), [data])
+  // Owner: everyone, the owner's own entries, or one staff member. Staff: their own (the query is already scoped).
+  const txns = useMemo(
+    () => (data ? (who === 'all' ? data.txns : data.txns.filter((x) => x.createdBy === who)) : null),
+    [data, who],
+  )
+  const sum = useMemo(() => (txns ? summarize(txns) : null), [txns])
   const now = Date.now()
   const buckets = useMemo(() => agingBuckets(customers, now), [customers, now])
   const top = useMemo(() => topDue(customers, 10), [customers])
@@ -126,14 +138,38 @@ export function ReportsPage() {
   return (
     <section className="mx-auto max-w-4xl space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="flex-1 text-2xl font-bold">{t('nav.reports')}</h1>
-        <Button variant="outline" disabled={!sum} onClick={exportCsv}>
-          {t('rep.csv')}
-        </Button>
-        <Button variant="ghost" disabled={!sum} className="border border-slate-200" onClick={() => setShowImage(true)}>
-          {t('rep.png')}
-        </Button>
+        <h1 className="flex-1 text-2xl font-bold">{isStaff ? t('staff.myReport') : t('nav.reports')}</h1>
+        {!isStaff && (
+          <>
+            <Button variant="outline" disabled={!sum} onClick={exportCsv}>
+              {t('rep.csv')}
+            </Button>
+            <Button variant="ghost" disabled={!sum} className="border border-slate-200" onClick={() => setShowImage(true)}>
+              {t('rep.png')}
+            </Button>
+          </>
+        )}
       </div>
+      {ownerUid && members.length > 0 && (
+        <label className="flex flex-wrap items-center gap-2 text-[15px]">
+          <span className="text-slate-600">{t('staff.who')}</span>
+          <select
+            value={who}
+            onChange={(e) => setWho(e.target.value)}
+            className="min-h-11 rounded-lg border border-slate-300 bg-white px-3"
+          >
+            <option value="all">{t('staff.whoAll')}</option>
+            <option value={ownerUid}>{t('staff.whoOwner')}</option>
+            {members.map((m) => (
+              <option key={m.uid} value={m.uid}>
+                {m.name}
+                {m.active ? '' : ` (${t('staff.off')})`}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {isStaff && <p className="text-sm text-slate-500">{t('staff.ownOnly')}</p>}
 
       <div className="flex flex-wrap gap-2" role="tablist">
         {PRESETS.map((p) => (
@@ -178,7 +214,7 @@ export function ReportsPage() {
           />
           <Row label={t('rep.collected')} sub={t('rep.collectedNote')} value={sum ? f.money(sum.collectedPaisa) : dash} strong />
           <Row label={t('rep.discount')} value={sum ? f.money(sum.discountPaisa) : dash} />
-          <Row label={t('rep.newCustomers')} value={f.num(newCount)} />
+          {!isStaff && <Row label={t('rep.newCustomers')} value={f.num(newCount)} />}
           {sum && sum.openingCount > 0 && <Row label={t('rep.opening')} sub={f.num(sum.openingCount)} value={f.money(sum.openingPaisa)} />}
           {sum && sum.adjustmentCount > 0 && <Row label={t('rep.adjustment')} value={f.money(sum.adjustmentPaisa)} />}
           {sum && sum.voidedCount > 0 && <Row label={t('rep.voided')} value={f.num(sum.voidedCount)} />}
@@ -196,46 +232,50 @@ export function ReportsPage() {
           <p className="mt-2 text-sm text-slate-500">{t('rep.smsLater')}</p>
         </Card>
 
-        <Card>
-          <Row label={t('rep.marketNow')} value={f.money(market)} strong />
-          <h2 className="mt-2 font-semibold">{t('rep.aging')}</h2>
-          <ul className="mt-1 space-y-2">
-            {buckets.map((b) => {
-              const share = market > 0 ? Math.round((b.paisa / market) * 100) : 0
-              return (
-                <li key={b.key}>
-                  <div className="flex justify-between text-[15px]">
-                    <span>
-                      {t('rep.days', { range: b.key })} <span className="text-slate-500">· {t('rep.count', { count: b.count })}</span>
-                    </span>
-                    <span className="tabular-nums">{f.money(b.paisa)}</span>
-                  </div>
-                  <div className="mt-1 h-2 rounded-full bg-slate-100">
-                    <div
-                      className={`h-2 rounded-full ${b.key === '0-30' ? 'bg-emerald-500' : b.key === '31-60' ? 'bg-amber-400' : 'bg-rose-500'}`}
-                      style={{ width: `${share}%` }}
-                    />
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        </Card>
+        {!isStaff && (
+          <Card>
+            <Row label={t('rep.marketNow')} value={f.money(market)} strong />
+            <h2 className="mt-2 font-semibold">{t('rep.aging')}</h2>
+            <ul className="mt-1 space-y-2">
+              {buckets.map((b) => {
+                const share = market > 0 ? Math.round((b.paisa / market) * 100) : 0
+                return (
+                  <li key={b.key}>
+                    <div className="flex justify-between text-[15px]">
+                      <span>
+                        {t('rep.days', { range: b.key })} <span className="text-slate-500">· {t('rep.count', { count: b.count })}</span>
+                      </span>
+                      <span className="tabular-nums">{f.money(b.paisa)}</span>
+                    </div>
+                    <div className="mt-1 h-2 rounded-full bg-slate-100">
+                      <div
+                        className={`h-2 rounded-full ${b.key === '0-30' ? 'bg-emerald-500' : b.key === '31-60' ? 'bg-amber-400' : 'bg-rose-500'}`}
+                        style={{ width: `${share}%` }}
+                      />
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </Card>
+        )}
 
-        <Card>
-          <h2 className="font-semibold">{t('rep.top')}</h2>
-          <ol className="mt-1 divide-y divide-slate-100">
-            {top.map((c, i) => (
-              <li key={c.mobile}>
-                <Link to={customerPath(c.mobile)} className="flex min-h-11 items-center gap-3 hover:bg-slate-50">
-                  <span className="w-6 text-sm text-slate-400">{f.num(i + 1)}</span>
-                  <span className="min-w-0 flex-1 truncate">{c.name}</span>
-                  <span className="font-semibold text-rose-700 tabular-nums">{f.money(c.totalDuePaisa)}</span>
-                </Link>
-              </li>
-            ))}
-          </ol>
-        </Card>
+        {!isStaff && (
+          <Card>
+            <h2 className="font-semibold">{t('rep.top')}</h2>
+            <ol className="mt-1 divide-y divide-slate-100">
+              {top.map((c, i) => (
+                <li key={c.mobile}>
+                  <Link to={customerPath(c.mobile)} className="flex min-h-11 items-center gap-3 hover:bg-slate-50">
+                    <span className="w-6 text-sm text-slate-400">{f.num(i + 1)}</span>
+                    <span className="min-w-0 flex-1 truncate">{c.name}</span>
+                    <span className="font-semibold text-rose-700 tabular-nums">{f.money(c.totalDuePaisa)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </Card>
+        )}
       </div>
       {showImage && sum && (
         <PngPreviewDialog

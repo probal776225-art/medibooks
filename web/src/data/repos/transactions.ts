@@ -23,6 +23,7 @@ import type { BalanceMismatch } from '../../domain/ledger'
 import type { Transaction, TransactionDraft } from '../../domain/types'
 import { transactionFromDoc } from '../convert'
 import { paths } from '../paths'
+import { staffScopeUid } from '../../stores/role'
 import { auditInBatch, commitInBackground, newBatch, writeContext } from '../writer'
 
 /** Returns the new transaction id. */
@@ -85,8 +86,14 @@ export interface LedgerPage {
   last: QueryDocumentSnapshot<DocumentData> | null
 }
 
+// Staff may read only their own transactions, so their queries carry createdBy == uid (the rules demand it).
+const mine = () => {
+  const uid = staffScopeUid()
+  return uid ? [where('createdBy', '==', uid)] : []
+}
+
 const ledgerQuery = (mobile: string) =>
-  query(paths.transactions(), where('customerId', '==', mobile), orderBy('createdAt', 'desc'))
+  query(paths.transactions(), where('customerId', '==', mobile), ...mine(), orderBy('createdAt', 'desc'))
 
 function toRows(docs: QueryDocumentSnapshot<DocumentData>[]): LedgerRowData[] {
   return docs.map((d) => ({
@@ -161,6 +168,7 @@ export function repairBalances(mismatches: readonly BalanceMismatch[]): void {
 const rangeQuery = (start: number, end: number) =>
   query(
     paths.transactions(),
+    ...mine(),
     where('createdAt', '>=', Timestamp.fromMillis(start)),
     where('createdAt', '<', Timestamp.fromMillis(end)),
     orderBy('createdAt', 'desc'),
@@ -193,7 +201,13 @@ export async function fetchRange(start: number, end: number): Promise<{ txns: Tr
 /** A customer's transactions since `start` (newest first) — for the statement. Offline it uses the cache. */
 export async function fetchCustomerSince(mobile: string, start: number): Promise<Transaction[]> {
   const snap = await getDocs(
-    query(paths.transactions(), where('customerId', '==', mobile), where('createdAt', '>=', Timestamp.fromMillis(start)), orderBy('createdAt', 'desc')),
+    query(
+      paths.transactions(),
+      where('customerId', '==', mobile),
+      ...mine(),
+      where('createdAt', '>=', Timestamp.fromMillis(start)),
+      orderBy('createdAt', 'desc'),
+    ),
   )
   return snap.docs.map((d) => transactionFromDoc(d.id, d.data()))
 }

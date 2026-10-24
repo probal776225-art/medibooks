@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { editMedicine, useCatalogStore } from '../../catalog/store'
+import { useIsOwner } from '../../stores/role'
 import { Icon } from '../../components/Icon'
 import { TextInput } from '../../components/ui'
 import { medicineToInput, type ShopPriceField } from '../../domain/medicines'
@@ -56,7 +57,8 @@ export function SaleLineRow({
   }
 
   // Offer to keep an edited price as the shop's own price for this unit (logged in price history).
-  const canSavePrice = m && snapshot?.priceOverridden && line.unit !== 'custom'
+  const isOwner = useIsOwner()
+  const canSavePrice = isOwner && m && snapshot?.priceOverridden && line.unit !== 'custom'
   function savePrice() {
     if (!m || line.unit === 'custom') return
     const price = parseMoney(line.priceText)

@@ -58,5 +58,8 @@ export const SIDEBAR: NavItem[] = [
   NAV.settings,
 ]
 
+/** Screens a staff member does not get (the owner's tools). */
+export const STAFF_HIDDEN: readonly RouteId[] = ['reminders', 'smsLog', 'imports', 'importOpening', 'importMedicines']
+
 /** Items on the mobile "আরও" page. */
 export const MORE_ITEMS: NavItem[] = [NAV.payment, NAV.reports, NAV.smsLog, NAV.medicines, NAV.imports, NAV.settings]

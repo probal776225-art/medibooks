@@ -52,7 +52,8 @@ writeFileSync('firebase.deploy.json', `${JSON.stringify(config, null, 2)}\n`)
 
 const run = (cmd, args) => execFileSync(cmd, args, { stdio: 'inherit' })
 console.log(`\n→ Building the app for ${projectId} …`)
-run('npm', ['--prefix', 'web', 'run', 'build:deploy'])
+// The app needs the owner's UID too (owner vs staff screens); it is not a secret.
+execFileSync('npm', ['--prefix', 'web', 'run', 'build:deploy'], { stdio: 'inherit', env: { ...process.env, VITE_OWNER_UID: env.OWNER_UID } })
 
 const passed = process.argv.slice(2)
 const only = passed.length ? passed : ['--only', 'hosting,firestore:rules,firestore:indexes']

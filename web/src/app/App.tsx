@@ -1,9 +1,10 @@
-import { lazy, useEffect, useRef } from 'react'
+import { lazy, useEffect, useRef, type ReactNode } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { startCatalog, stopCatalog } from '../catalog/store'
 import { PlaceholderPage } from '../components/PlaceholderPage'
 import { Toaster } from '../components/ui'
 import { LoginPage } from '../features/auth/LoginPage'
+import { NoAccess } from '../features/auth/NoAccess'
 import { CustomerDetailPage } from '../features/customers/CustomerDetailPage'
 import { CustomersPage } from '../features/customers/CustomersPage'
 import { NewCustomerPage } from '../features/customers/NewCustomerPage'
@@ -18,6 +19,7 @@ import { useHtmlLang, useT } from '../i18n'
 import { initAuth, useAuthStore } from '../stores/auth'
 import { startSessionData, stopSessionData } from '../stores/data'
 import { startIdleWatch, unlockAfterLogin, useLockStore } from '../stores/lock'
+import { startRole, stopRole, useIsOwner, useRoleStore } from '../stores/role'
 import { Layout } from './Layout'
 import { NAV, ROUTES } from './routes'
 
@@ -32,6 +34,12 @@ const placeholderRoutes = (['reminders', 'smsLog'] as const).map(
   (id) => ({ path: ROUTES[id], element: <PlaceholderPage item={NAV[id]} /> }),
 )
 
+/** The owner's tools: staff who open the link land on Home. */
+function OwnerOnly({ children }: { children: ReactNode }) {
+  const isOwner = useIsOwner()
+  return isOwner ? children : <Navigate to={ROUTES.home} replace />
+}
+
 const router = createBrowserRouter([
   {
     element: <Layout />,
@@ -45,9 +53,9 @@ const router = createBrowserRouter([
       { path: ROUTES.medicines, element: <MedicinesPage /> },
       { path: '/medicines/:id', element: <MedicineDetailPage /> },
       { path: ROUTES.reports, element: <ReportsPage /> },
-      { path: ROUTES.imports, element: <ImportsPage /> },
-      { path: ROUTES.importOpening, element: <OpeningImportPage /> },
-      { path: ROUTES.importMedicines, element: <MedicineImportPage /> },
+      { path: ROUTES.imports, element: <OwnerOnly><ImportsPage /></OwnerOnly> },
+      { path: ROUTES.importOpening, element: <OwnerOnly><OpeningImportPage /></OwnerOnly> },
+      { path: ROUTES.importMedicines, element: <OwnerOnly><MedicineImportPage /></OwnerOnly> },
       { path: ROUTES.settings, element: <SettingsPage /> },
       { path: ROUTES.more, element: <MorePage /> },
       ...placeholderRoutes,
@@ -66,6 +74,8 @@ function Splash() {
 export function App() {
   useHtmlLang()
   const status = useAuthStore((s) => s.status)
+  const uid = useAuthStore((s) => s.user?.uid ?? null)
+  const role = useRoleStore((s) => s.role)
   const locked = useLockStore((s) => s.locked)
   const prevStatus = useRef(status)
 
@@ -78,19 +88,28 @@ export function App() {
     prevStatus.current = status
   }, [status])
 
-  // Realtime listeners and medicine sync only while signed in.
+  // Owner or staff? (the owner's UID is known at build time; staff have a members record)
   useEffect(() => {
-    if (status === 'signedIn') {
+    if (status === 'signedIn' && uid) startRole(uid)
+    else if (status === 'signedOut') stopRole()
+  }, [status, uid])
+
+  // Realtime listeners and medicine sync only for the owner or an active staff member.
+  const allowed = status === 'signedIn' && (role === 'owner' || role === 'staff')
+  useEffect(() => {
+    if (allowed) {
       startSessionData()
       startCatalog()
-    } else if (status === 'signedOut') {
+    } else {
       stopSessionData()
       stopCatalog()
     }
-  }, [status])
+  }, [allowed])
 
   if (status === 'loading') return <Splash />
   if (status === 'signedOut') return <LoginPage />
+  if (role === 'loading') return <Splash />
+  if (role === 'none' || role === 'disabled') return <NoAccess disabled={role === 'disabled'} />
   return (
     <>
       {/* Hidden (not unmounted) while locked: drafts and scroll positions survive. */}

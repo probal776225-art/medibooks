@@ -5,6 +5,7 @@ import { Modal } from '../../components/ui'
 import type { Medicine } from '../../domain/types'
 import { useT } from '../../i18n'
 import { useFormat } from '../../i18n/format'
+import { useIsOwner } from '../../stores/role'
 import { useToastStore } from '../../stores/toast'
 import { MedicineForm } from './MedicineForm'
 import { refPriceText, refSourcePrices } from './refPrice'
@@ -27,6 +28,7 @@ export function QuickAddMedicine({
   const t = useT()
   const showToast = useToastStore((s) => s.show)
   const refMeta = useRefStore((s) => s.meta)
+  const isOwner = useIsOwner()
   const f = useFormat()
   const prices = reference ? refSourcePrices(reference) : undefined
   const priceText = reference ? refPriceText(reference, f.money, t('med.piece'), true) : null
@@ -46,12 +48,17 @@ export function QuickAddMedicine({
           }
         }
         sourcePrices={prices}
+        hidePrices={!isOwner}
         note={
-          reference
+          !isOwner
             ? priceText
-              ? t('ref.addHintPriced', { price: priceText })
-              : t('ref.addHint')
-            : undefined
+              ? t('staff.addMedPriced', { price: priceText })
+              : t('staff.addMedNoPrice')
+            : reference
+              ? priceText
+                ? t('ref.addHintPriced', { price: priceText })
+                : t('ref.addHint')
+              : undefined
         }
         submitLabel={t('customer.save')}
         onSubmit={(input) => {

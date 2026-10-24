@@ -27,13 +27,15 @@ interface Props {
   sourcePrices?: { unit: Paisa | null; strip: Paisa | null; pack: Paisa | null }
   /** Shown above the price fields (e.g. "the file has no prices"). */
   note?: string
+  /** Staff: no shop price fields (the source price, if any, is used; the price can be typed in the bill). */
+  hidePrices?: boolean
   submitLabel: string
   onSubmit: (input: MedicineInput) => void
   onCancel?: () => void
 }
 
 /** Prices typed here are the SHOP's own prices; imported (source) prices are shown as placeholders. */
-export function MedicineForm({ initial, initialName = '', prefill, sourcePrices, note, submitLabel, onSubmit, onCancel }: Props) {
+export function MedicineForm({ initial, initialName = '', prefill, sourcePrices, note, hidePrices, submitLabel, onSubmit, onCancel }: Props) {
   const t = useT()
   const medicines = useCatalogStore((s) => s.medicines)
   const companies = useMemo(
@@ -145,33 +147,37 @@ export function MedicineForm({ initial, initialName = '', prefill, sourcePrices,
         </Field>
       </div>
       {note && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{note}</p>}
-      <Field label={t('med.unitPrice')}>
-        <TextInput
-          value={v.unitPrice}
-          onChange={set('unitPrice')}
-          inputMode="decimal"
-          placeholder={sourceHint(initial?.sourceUnitPricePaisa ?? sourcePrices?.unit)}
-        />
-      </Field>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label={t('med.stripPrice')}>
-          <TextInput
-            value={v.stripPrice}
-            onChange={set('stripPrice')}
-            inputMode="decimal"
-            placeholder={sourceHint(initial?.sourceStripPricePaisa ?? sourcePrices?.strip)}
-          />
-        </Field>
-        <Field label={t('med.packPrice')}>
-          <TextInput
-            value={v.packPrice}
-            onChange={set('packPrice')}
-            inputMode="decimal"
-            placeholder={sourceHint(initial?.sourcePackPricePaisa ?? sourcePrices?.pack)}
-          />
-        </Field>
-      </div>
-      <p className="-mt-1 text-sm text-slate-500">{t('med.priceHint')}</p>
+      {!hidePrices && (
+        <>
+          <Field label={t('med.unitPrice')}>
+            <TextInput
+              value={v.unitPrice}
+              onChange={set('unitPrice')}
+              inputMode="decimal"
+              placeholder={sourceHint(initial?.sourceUnitPricePaisa ?? sourcePrices?.unit)}
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t('med.stripPrice')}>
+              <TextInput
+                value={v.stripPrice}
+                onChange={set('stripPrice')}
+                inputMode="decimal"
+                placeholder={sourceHint(initial?.sourceStripPricePaisa ?? sourcePrices?.strip)}
+              />
+            </Field>
+            <Field label={t('med.packPrice')}>
+              <TextInput
+                value={v.packPrice}
+                onChange={set('packPrice')}
+                inputMode="decimal"
+                placeholder={sourceHint(initial?.sourcePackPricePaisa ?? sourcePrices?.pack)}
+              />
+            </Field>
+          </div>
+          <p className="-mt-1 text-sm text-slate-500">{t('med.priceHint')}</p>
+        </>
+      )}
       <Field label={t('med.link')} hint={t('med.linkHint')}>
         <TextInput value={v.sourceUrl} onChange={set('sourceUrl')} type="url" inputMode="url" placeholder="https://medex.com.bd/brands/…" />
       </Field>

@@ -8,6 +8,7 @@ import { useT } from '../../i18n'
 import { useFormat } from '../../i18n/format'
 import { jpegBlob } from '../../lib/imageShrink'
 import { canShareFile, downloadFile, shareFile } from '../../lib/share'
+import { useIsOwner } from '../../stores/role'
 import { useToastStore } from '../../stores/toast'
 
 export function PrescriptionViewer({ item, onClose }: { item: Prescription; onClose: () => void }) {
@@ -19,6 +20,7 @@ export function PrescriptionViewer({ item, onClose }: { item: Prescription; onCl
   const [state, setState] = useState<'loading' | 'ready' | 'missing'>('loading')
   const [zoomed, setZoomed] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const isOwner = useIsOwner()
 
   useEffect(() => {
     let alive = true
@@ -70,32 +72,34 @@ export function PrescriptionViewer({ item, onClose }: { item: Prescription; onCl
         </>
       )}
 
-      <div className="mt-4 border-t border-slate-100 pt-3">
-        {confirming ? (
-          <div className="space-y-2">
-            <p className="text-rose-700">{t('rx.deleteConfirm')}</p>
-            <div className="flex gap-2">
-              <Button
-                variant="danger"
-                onClick={() => {
-                  deletePrescription(item)
-                  showToast('success', 'rx.deleted')
-                  onClose()
-                }}
-              >
-                {t('rx.deleteYes')}
-              </Button>
-              <Button variant="ghost" onClick={() => setConfirming(false)}>
-                {t('customer.cancel')}
-              </Button>
+      {isOwner && (
+        <div className="mt-4 border-t border-slate-100 pt-3">
+          {confirming ? (
+            <div className="space-y-2">
+              <p className="text-rose-700">{t('rx.deleteConfirm')}</p>
+              <div className="flex gap-2">
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    deletePrescription(item)
+                    showToast('success', 'rx.deleted')
+                    onClose()
+                  }}
+                >
+                  {t('rx.deleteYes')}
+                </Button>
+                <Button variant="ghost" onClick={() => setConfirming(false)}>
+                  {t('customer.cancel')}
+                </Button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <Button variant="ghost" className="text-rose-700" onClick={() => setConfirming(true)}>
-            {t('rx.delete')}
-          </Button>
-        )}
-      </div>
+          ) : (
+            <Button variant="ghost" className="text-rose-700" onClick={() => setConfirming(true)}>
+              {t('rx.delete')}
+            </Button>
+          )}
+        </div>
+      )}
     </Modal>
   )
 }

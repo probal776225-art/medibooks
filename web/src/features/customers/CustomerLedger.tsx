@@ -4,6 +4,7 @@ import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Card, TextInput } from '../../components/ui'
 import { fetchLedgerPage, subscribeLedger, voidTransaction, type LedgerRowData } from '../../data/repos/transactions'
+import { useIsOwner } from '../../stores/role'
 import { balancesFromNewest } from '../../domain/ledger'
 import { formatBp } from '../../domain/money'
 import type { Customer, Transaction } from '../../domain/types'
@@ -19,6 +20,7 @@ const PAGE = 30
 
 function Detail({ txn }: { txn: Transaction }) {
   const t = useT()
+  const isOwner = useIsOwner()
   const f = useFormat()
   const digits = useUiStore((s) => s.digits)
   const showToast = useToastStore((s) => s.show)
@@ -107,17 +109,18 @@ function Detail({ txn }: { txn: Transaction }) {
             </Button>
           </div>
         </div>
-      ) : (
+      ) : isOwner ? (
         <Button variant="ghost" className="min-h-10 text-sm text-rose-700" onClick={() => setVoiding(true)}>
           {t('ledger.void')}
         </Button>
-      )}
+      ) : null}
     </div>
   )
 }
 
 export function CustomerLedger({ customer }: { customer: Customer }) {
   const t = useT()
+  const isOwner = useIsOwner()
   const f = useFormat()
   const [first, setFirst] = useState<LedgerRowData[] | null>(null)
   const [firstLast, setFirstLast] = useState<QueryDocumentSnapshot<DocumentData> | null>(null)
@@ -160,6 +163,7 @@ export function CustomerLedger({ customer }: { customer: Customer }) {
   return (
     <Card>
       <h2 className="font-semibold">{t('ledger.title')}</h2>
+      {!isOwner && <p className="text-sm text-slate-500">{t('staff.ownOnly')}</p>}
       {failed ? (
         <p className="mt-1 text-slate-500">{t('ledger.loadFailed')}</p>
       ) : first === null ? (
@@ -198,9 +202,12 @@ export function CustomerLedger({ customer }: { customer: Customer }) {
                       {txn.effectPaisa > 0 ? '+' : txn.effectPaisa < 0 ? '−' : ''}
                       {f.money(Math.abs(txn.effectPaisa))}
                     </span>
-                    <span className="block text-xs text-slate-500">
-                      {t('ledger.balance', { amount: f.money(balanceAfterPaisa) })}
-                    </span>
+                    {/* A running balance needs every transaction; staff see only their own. */}
+                    {isOwner && (
+                      <span className="block text-xs text-slate-500">
+                        {t('ledger.balance', { amount: f.money(balanceAfterPaisa) })}
+                      </span>
+                    )}
                   </span>
                 </button>
                 {open === txn.id && <Detail txn={txn} />}

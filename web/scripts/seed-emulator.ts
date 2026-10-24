@@ -9,6 +9,10 @@ const OWNER_EMAIL = 'owner@baki.test'
 const OWNER_PASSWORD = 'baki-test-1234'
 // Must match the UID placeholder in firestore.rules.
 const OWNER_UID = 'REPLACE_WITH_OWNER_UID'
+// A test staff member (Phase 14), also emulator only.
+const STAFF_EMAIL = 'staff@baki.test'
+const STAFF_PASSWORD = 'staff-test-1234'
+const STAFF_UID = 'test-staff-1'
 
 import { initializeApp } from 'firebase/app'
 import { connectAuthEmulator, getAuth, signInWithEmailAndPassword } from 'firebase/auth'
@@ -121,6 +125,12 @@ async function main() {
     body: JSON.stringify({ localId: OWNER_UID, email: OWNER_EMAIL, password: OWNER_PASSWORD }),
   })
   if (!res.ok) throw new Error(`Creating test owner failed: ${res.status} ${await res.text()}`)
+  const staffRes = await call(`${AUTH}/identitytoolkit.googleapis.com/v1/projects/${PROJECT}/accounts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
+    body: JSON.stringify({ localId: STAFF_UID, email: STAFF_EMAIL, password: STAFF_PASSWORD }),
+  })
+  if (!staffRes.ok) throw new Error(`Creating test staff failed: ${staffRes.status} ${await staffRes.text()}`)
 
   // 3. Sign in as the owner and write through the security rules, like the app does.
   const app = initializeApp({ apiKey: 'demo-key', projectId: PROJECT, appId: 'seed' })
@@ -182,6 +192,16 @@ async function main() {
       schemaVersion: 1,
     })
   }
+  // The test staff member's record (written by the owner, as the app does).
+  batch.set(doc(db, 'shops', 'main', 'members', STAFF_UID), {
+    role: 'staff',
+    name: 'Test Staff',
+    email: STAFF_EMAIL,
+    active: true,
+    createdAt: Timestamp.fromMillis(now),
+    createdBy: OWNER_UID,
+    schemaVersion: 1,
+  })
   await batch.commit()
 
   // Sample medicines: most look like a supplier-file import (source price), some added by hand (shop price),
@@ -228,6 +248,7 @@ async function main() {
 
   console.log(`\nSeeded ${NAMES.length} customers, ${txns} transactions and ${rows.length} sample medicines into the emulator.`)
   console.log(`Emulator login →  email: ${OWNER_EMAIL}   password: ${OWNER_PASSWORD}`)
+  console.log(`Staff login    →  email: ${STAFF_EMAIL}   password: ${STAFF_PASSWORD}`)
   console.log('Emulator UI   →  http://127.0.0.1:4000/firestore\n')
   process.exit(0)
 }

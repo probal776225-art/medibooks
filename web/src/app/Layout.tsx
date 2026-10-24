@@ -6,7 +6,8 @@ import { useDataStore } from '../stores/data'
 import { useOnline, usePendingCount } from '../stores/sync'
 import { useUiStore } from '../stores/ui'
 import { ReloadPrompt } from './ReloadPrompt'
-import { NAV, ROUTES, SIDEBAR, type NavItem } from './routes'
+import { useIsStaff, useRoleStore } from '../stores/role'
+import { NAV, ROUTES, SIDEBAR, STAFF_HIDDEN, type NavItem } from './routes'
 import { useShortcuts } from './useShortcuts'
 
 function Header() {
@@ -15,12 +16,16 @@ function Header() {
   const pending = usePendingCount()
   const toggleLanguage = useUiStore((s) => s.toggleLanguage)
   const shopName = useDataStore((s) => s.settings.shop.name)
+  const staffName = useRoleStore((s) => (s.role === 'staff' ? s.name : ''))
 
   return (
     <header className="sticky top-0 z-20 flex min-h-14 items-center gap-3 border-b border-slate-200 bg-white/95 px-4 pt-[env(safe-area-inset-top)] backdrop-blur">
       <div className="min-w-0 flex-1">
         <div className="text-lg font-bold leading-tight text-teal-800">{t('app.name')}</div>
-        <div className="truncate text-xs leading-tight text-slate-500">{shopName}</div>
+        <div className="truncate text-xs leading-tight text-slate-500">
+          {shopName}
+          {staffName && <span className="ml-1 font-medium text-teal-700">· {t('staff.badge', { name: staffName })}</span>}
+        </div>
       </div>
       {pending > 0 && (
         <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
@@ -62,10 +67,11 @@ function SidebarLink({ item }: { item: NavItem }) {
 
 function Sidebar() {
   const t = useT()
+  const isStaff = useIsStaff()
   return (
     <aside className="hidden w-60 shrink-0 border-r border-slate-200 bg-white md:flex md:flex-col">
       <nav className="flex flex-1 flex-col gap-1 p-3">
-        {SIDEBAR.map((item) => (
+        {SIDEBAR.filter((item) => !isStaff || !STAFF_HIDDEN.includes(item.id)).map((item) => (
           <SidebarLink key={item.id} item={item} />
         ))}
       </nav>
@@ -76,6 +82,7 @@ function Sidebar() {
 
 function BottomNav() {
   const t = useT()
+  const isStaff = useIsStaff()
   const tab = (item: NavItem) => (
     <NavLink
       key={item.id}
@@ -105,7 +112,7 @@ function BottomNav() {
         </span>
         {t('nav.newSale')}
       </NavLink>
-      {tab(NAV.reminders)}
+      {isStaff ? tab(NAV.reports) : tab(NAV.reminders)}
       <NavLink
         to={ROUTES.more}
         className={({ isActive }) =>

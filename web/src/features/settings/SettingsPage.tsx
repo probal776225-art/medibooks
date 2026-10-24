@@ -15,7 +15,9 @@ import { useDataStore } from '../../stores/data'
 import { useUiStore } from '../../stores/ui'
 import { BackupCard } from './BackupCard'
 import { BalanceCheckCard } from './BalanceCheckCard'
+import { useIsOwner, useRoleStore } from '../../stores/role'
 import { SecurityCard } from './SecurityCard'
+import { StaffCard } from './StaffCard'
 import { UsageCard } from './UsageCard'
 
 type Shop = ShopSettings['shop']
@@ -140,11 +142,61 @@ export function SettingsPage() {
   const { language, digits, setLanguage, setDigits } = useUiStore()
   const [editingShop, setEditingShop] = useState(false)
   const { hash } = useLocation()
+  const isOwner = useIsOwner()
+  const staffName = useRoleStore((st) => (st.role === 'staff' ? st.name : ''))
 
   // Home's backup reminder links to #backup.
   useEffect(() => {
     if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' })
   }, [hash])
+
+  const display = (
+    <Card>
+      <h2 className="font-semibold">{t('settings.display')}</h2>
+      <Choice<Language>
+        label={t('settings.language')}
+        value={language}
+        options={[
+          { id: 'bn', text: 'বাংলা' },
+          { id: 'en', text: 'English' },
+        ]}
+        onChange={setLanguage}
+      />
+      <Choice<DigitStyle>
+        label={t('settings.digits')}
+        value={digits}
+        options={[
+          { id: 'bn', text: 'বাংলা ১২৩' },
+          { id: 'en', text: 'English 123' },
+        ]}
+        onChange={setDigits}
+      />
+      <p className="mt-2 text-sm text-slate-500">{t('settings.thisDevice')}</p>
+    </Card>
+  )
+  const account = (
+    <Card>
+      <h2 className="font-semibold">{t('settings.account')}</h2>
+      <p className="mt-1 text-slate-600">
+        {t('settings.signedInAs')}: <span className="font-medium">{email}</span>
+        {staffName && <span className="block text-sm text-teal-700">{t('staff.badge', { name: staffName })}</span>}
+      </p>
+      <Button variant="danger" className="mt-3" onClick={() => void signOut()}>
+        {t('settings.logout')}
+      </Button>
+    </Card>
+  )
+
+  if (!isOwner) {
+    return (
+      <section className="mx-auto max-w-xl space-y-4">
+        <h1 className="text-2xl font-bold">{t('nav.settings')}</h1>
+        {display}
+        <SecurityCard />
+        {account}
+      </section>
+    )
+  }
 
   return (
     <section className="mx-auto max-w-xl space-y-4">
@@ -176,44 +228,16 @@ export function SettingsPage() {
         <p className="text-sm text-slate-500">{t('settings.roundHint')}</p>
       </Card>
 
-      <Card>
-        <h2 className="font-semibold">{t('settings.display')}</h2>
-        <Choice<Language>
-          label={t('settings.language')}
-          value={language}
-          options={[
-            { id: 'bn', text: 'বাংলা' },
-            { id: 'en', text: 'English' },
-          ]}
-          onChange={setLanguage}
-        />
-        <Choice<DigitStyle>
-          label={t('settings.digits')}
-          value={digits}
-          options={[
-            { id: 'bn', text: 'বাংলা ১২৩' },
-            { id: 'en', text: 'English 123' },
-          ]}
-          onChange={setDigits}
-        />
-        <p className="mt-2 text-sm text-slate-500">{t('settings.thisDevice')}</p>
-      </Card>
+      {display}
 
       <SecurityCard />
+      <StaffCard />
       <BackupCard />
       <UsageCard />
       <MedicinesCard />
       <BalanceCheckCard />
 
-      <Card>
-        <h2 className="font-semibold">{t('settings.account')}</h2>
-        <p className="mt-1 text-slate-600">
-          {t('settings.signedInAs')}: <span className="font-medium">{email}</span>
-        </p>
-        <Button variant="danger" className="mt-3" onClick={() => void signOut()}>
-          {t('settings.logout')}
-        </Button>
-      </Card>
+      {account}
 
       <p className="text-sm text-slate-500">{t('settings.more')}</p>
       {editingShop && <ShopInfoDialog shop={settings.shop} onClose={() => setEditingShop(false)} />}

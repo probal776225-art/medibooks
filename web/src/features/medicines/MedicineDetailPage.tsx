@@ -10,6 +10,7 @@ import { medicineDisplayName, sellableUnits, type UnitOption } from '../../domai
 import type { Medicine } from '../../domain/types'
 import { useT, type MessageKey } from '../../i18n'
 import { useFormat } from '../../i18n/format'
+import { useIsOwner } from '../../stores/role'
 import { useToastStore } from '../../stores/toast'
 import { MedicineForm } from './MedicineForm'
 
@@ -78,6 +79,7 @@ export function MedicineDetailPage() {
   const status = useCatalogStore((s) => s.status)
   const showToast = useToastStore((s) => s.show)
   const [editing, setEditing] = useState(false)
+  const isOwner = useIsOwner()
 
   if (!m) {
     return (
@@ -151,10 +153,12 @@ export function MedicineDetailPage() {
           </p>
 
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setEditing(true)}>
-              {t('customer.edit')}
-            </Button>
-            {hasPriceOverride(m) && (
+            {isOwner && (
+              <Button variant="outline" onClick={() => setEditing(true)}>
+                {t('customer.edit')}
+              </Button>
+            )}
+            {isOwner && hasPriceOverride(m) && (
               <Button
                 variant="ghost"
                 className="border border-slate-200"
@@ -177,13 +181,15 @@ export function MedicineDetailPage() {
 
       <PriceHistory medicineId={m.id} version={m.updatedAt} />
 
-      <Button
-        variant="ghost"
-        className="w-full border border-slate-200"
-        onClick={() => changeMedicineStatus(m, m.status === 'active' ? 'inactive' : 'active')}
-      >
-        {m.status === 'active' ? t('med.deactivate') : t('med.activate')}
-      </Button>
+      {isOwner && (
+        <Button
+          variant="ghost"
+          className="w-full border border-slate-200"
+          onClick={() => changeMedicineStatus(m, m.status === 'active' ? 'inactive' : 'active')}
+        >
+          {m.status === 'active' ? t('med.deactivate') : t('med.activate')}
+        </Button>
+      )}
     </section>
   )
 }

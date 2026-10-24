@@ -111,7 +111,17 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 - সেটিংস → **জায়গা** te dekhben koto chhobi ache, ar free 1 GB er koto ongsho lagche. 70% er beshi hole holud satorkota ashbe.
 - Backup e chhobi o thake. File onek boro hole **"ছবিও ব্যাকআপে রাখুন"** tick tule din, tokhon chhobi chara baki sob thakbe.
 
-## 8. Oshudh ar dam
+## 8. Staff (kormochari)
+
+- **Staff jog:** সেটিংস → **স্টাফ** → **+ স্টাফ যোগ করুন** → nam, staff er email ar ekta password (8+ okkhor) → **স্টাফ অ্যাকাউন্ট খুলুন** (internet lagbe). Email ar password staff ke bole din.
+- Staff nijer phone/PC te **medibooks.web.app** e oi email/password diye login korbe, tarpor nijer **PIN** chalu korbe.
+- **Staff ja parbe:** customer khuja/notun customer, **নতুন বাকি**, **জমা নিন**, prescription er chhobi, MedEx list theke oshudh jog (dam chara — dam apni thik korben).
+- **Staff ja parbe na:** বাতিল, dam/setting bodlano, ইমপোর্ট, ব্যাকআপ, ব্যালেন্স যাচাই, mobile number bodol, chhobi muchha. Staff shudhu **nijer** lenden ar **আমার রিপোর্ট** dekhbe; bazarer mot baki ba onno karo kaj dekhbe na.
+- **Kar kaj dekhte:** রিপোর্ট → **কার হিসাব** → সবাই / মালিক (আমি) / staff er nam.
+- **Staff chole gele:** সেটিংস → স্টাফ → tar switch **বন্ধ** korun — sathe sathe kono hisab dekhte parbe na. Pore abar chalu kora jay.
+- **Staff password bhule gele:** সেটিংস → স্টাফ → **পাসওয়ার্ড রিসেটের ইমেইল পাঠান** (staff er email e link jabe).
+
+## 9. Oshudh ar dam
 
 - **Nijer dam:** ওষুধ → oshudh → এডিট → dam. Import e apnar dam kokhono bodlay na.
 - **Supplier er dam er file (CSV):** সেটিংস → ইমপোর্ট → ওষুধের দামের ফাইল.
@@ -120,14 +130,14 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 
 ---
 
-## 9. SMS
+## 10. SMS
 
 - SMS **ekhono chalu na** (Phase 7 — SMS provider thik hole hobe).
 - Chalu hole: SMS na gele age dekhben (1) customer er "SMS পাঠাবে" chalu kina, (2) SMS লগ e ki likha, (3) provider er balance. Ei ongsho tokhon puro kore lekha hobe.
 
 ---
 
-## 10. Firebase er free limit dekha
+## 11. Firebase er free limit dekha
 
 Spark (free) plan e protidin: **50,000 read, 20,000 write, 1 GiB data**. Card nei, tai kokhono taka katbe na. Limit pere gele oi diner baki shomoy server e lekha bondho thake (app offline er moto chole, data phone e jome thake). Limit protidin **Bangladesh shomoy dupur 1–2 tar dike** abar shuru hoy.
 
@@ -138,7 +148,7 @@ Dekhar niyom:
 
 ---
 
-## 11. Somossa hole
+## 12. Somossa hole
 
 | Somossa | Ki korben |
 |---|---|
@@ -151,7 +161,7 @@ Dekhar niyom:
 
 ---
 
-## 12. Notun version deploy (developer)
+## 13. Notun version deploy (developer)
 
 ```bash
 cd ~/Claude/pharmacy-baki

@@ -5,7 +5,20 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing'
-import { Bytes, deleteDoc, doc, getDoc, increment, setDoc, updateDoc, writeBatch } from 'firebase/firestore'
+import {
+  Bytes,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  increment,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+  writeBatch,
+} from 'firebase/firestore'
 import { readFileSync } from 'node:fs'
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest'
 
@@ -206,3 +219,99 @@ describe('prescription photos', () => {
     await assertFails(deleteDoc(doc(owner(), `${SHOP}/stats/usage`)))
   })
 })
+
+describe('staff (Phase 14)', () => {
+  const STAFF = 'staff-1'
+  const staff = () => env.authenticatedContext(STAFF).firestore()
+  const tiny = Bytes.fromUint8Array(new Uint8Array(100))
+
+  beforeEach(async () => {
+    await seed(`${SHOP}/members/${STAFF}`, { role: 'staff', name: 'Rana', active: true })
+    await seed(`${SHOP}/members/staff-2`, { role: 'staff', name: 'Mitu', active: true })
+    await seed(`${SHOP}/customers/${MOBILE}`, customer())
+  })
+
+  it('reads what the counter needs, not the audit log, the usage counter or other staff', async () => {
+    await seed(`${SHOP}/settings/general`, { a: 1 })
+    await seed(`${SHOP}/medicines/m1`, { brandName: 'Napa' })
+    await seed(`${SHOP}/refCatalog/medex`, { version: 'v1' })
+    await seed(`${SHOP}/auditLog/a1`, { action: 'x' })
+    await seed(`${SHOP}/stats/usage`, { prescriptionCount: 1 })
+    for (const path of ['customers/' + MOBILE, 'settings/general', 'medicines/m1', 'refCatalog/medex', `members/${STAFF}`]) {
+      await assertSucceeds(getDoc(doc(staff(), `${SHOP}/${path}`)))
+    }
+    for (const path of ['auditLog/a1', 'stats/usage', 'members/staff-2']) {
+      await assertFails(getDoc(doc(staff(), `${SHOP}/${path}`)))
+    }
+  })
+
+  it('makes a sale with its due increment, stamped with their own uid only', async () => {
+    const db = staff()
+    const ok = writeBatch(db)
+    ok.set(doc(db, `${SHOP}/transactions/t1`), { ...sale(), createdBy: STAFF })
+    ok.update(doc(db, `${SHOP}/customers/${MOBILE}`), { totalDuePaisa: increment(5000), lastTxnAt: 1 })
+    await assertSucceeds(ok.commit())
+    const bad = writeBatch(db)
+    bad.set(doc(db, `${SHOP}/transactions/t2`), { ...sale(), createdBy: OWNER })
+    bad.update(doc(db, `${SHOP}/customers/${MOBILE}`), { totalDuePaisa: increment(5000) })
+    await assertFails(bad.commit())
+    await assertSucceeds(setDoc(doc(db, `${SHOP}/customers/01811111111`), customer('01811111111')))
+  })
+
+  it('sees only their own transactions', async () => {
+    await seed(`${SHOP}/transactions/mine`, { ...sale(), createdBy: STAFF })
+    await seed(`${SHOP}/transactions/theirs`, { ...sale(), createdBy: OWNER })
+    await assertSucceeds(getDoc(doc(staff(), `${SHOP}/transactions/mine`)))
+    await assertFails(getDoc(doc(staff(), `${SHOP}/transactions/theirs`)))
+    const txns = collection(staff(), `${SHOP}/transactions`)
+    await assertSucceeds(getDocs(query(txns, where('createdBy', '==', STAFF))))
+    await assertFails(getDocs(query(txns, where('customerId', '==', MOBILE))))
+  })
+
+  it('cannot void, edit customers, change settings or prices, or manage staff', async () => {
+    await seed(`${SHOP}/transactions/mine`, { ...sale(), createdBy: STAFF })
+    await seed(`${SHOP}/medicines/m1`, { brandName: 'Napa', shopUnitPricePaisa: null })
+    const db = staff()
+    await assertFails(updateDoc(doc(db, `${SHOP}/transactions/mine`), { voided: true, voidReason: 'x', voidedAt: 1, voidedBy: STAFF }))
+    await assertFails(updateDoc(doc(db, `${SHOP}/customers/${MOBILE}`), { name: 'Other' }))
+    await assertFails(updateDoc(doc(db, `${SHOP}/customers/${MOBILE}`), { smsEnabled: false }))
+    await assertFails(setDoc(doc(db, `${SHOP}/settings/general`), { a: 2 }))
+    await assertFails(updateDoc(doc(db, `${SHOP}/medicines/m1`), { shopUnitPricePaisa: 100 }))
+    await assertFails(setDoc(doc(db, `${SHOP}/medicines/m2`), { brandName: 'X', shopUnitPricePaisa: 100, shopStripPricePaisa: null, shopPackPricePaisa: null }))
+    await assertSucceeds(setDoc(doc(db, `${SHOP}/medicines/m3`), { brandName: 'X', shopUnitPricePaisa: null, shopStripPricePaisa: null, shopPackPricePaisa: null }))
+    await assertFails(setDoc(doc(db, `${SHOP}/members/staff-3`), { role: 'staff', name: 'New', active: true }))
+    await assertFails(updateDoc(doc(db, `${SHOP}/members/${STAFF}`), { active: true, name: 'Rana!' }))
+    await assertSucceeds(setDoc(doc(db, `${SHOP}/auditLog/a2`), { action: 'x', by: STAFF }))
+    await assertFails(setDoc(doc(db, `${SHOP}/auditLog/a3`), { action: 'x', by: OWNER }))
+  })
+
+  it('adds prescription photos and bumps the counter, but cannot delete photos', async () => {
+    const db = staff()
+    const batch = writeBatch(db)
+    batch.set(doc(db, `${SHOP}/prescriptions/p1`), { customerId: MOBILE, note: '', thumb: tiny, createdBy: STAFF })
+    batch.set(doc(db, `${SHOP}/prescriptionImages/p1`), { image: tiny, createdBy: STAFF })
+    batch.set(doc(db, `${SHOP}/stats/usage`), { prescriptionCount: increment(1), prescriptionBytes: increment(200) }, { merge: true })
+    await assertSucceeds(batch.commit())
+    await assertSucceeds(getDoc(doc(db, `${SHOP}/prescriptionImages/p1`)))
+    await assertFails(deleteDoc(doc(db, `${SHOP}/prescriptions/p1`)))
+    await assertFails(deleteDoc(doc(db, `${SHOP}/prescriptionImages/p1`)))
+    await assertFails(setDoc(doc(db, `${SHOP}/stats/usage`), { other: 1 }, { merge: true }))
+  })
+
+  it('a turned-off staff member loses access at once', async () => {
+    await seed(`${SHOP}/members/${STAFF}`, { role: 'staff', name: 'Rana', active: false })
+    await assertFails(getDoc(doc(staff(), `${SHOP}/customers/${MOBILE}`)))
+    await assertFails(setDoc(doc(staff(), `${SHOP}/transactions/t9`), { ...sale(), createdBy: STAFF }))
+    await assertSucceeds(getDoc(doc(staff(), `${SHOP}/members/${STAFF}`)))
+  })
+
+  it('the owner adds and turns off staff; records are never deleted or made owners', async () => {
+    const db = owner()
+    await assertSucceeds(setDoc(doc(db, `${SHOP}/members/staff-9`), { role: 'staff', name: 'Joy', active: true, email: 'joy@x.test' }))
+    await assertSucceeds(updateDoc(doc(db, `${SHOP}/members/staff-9`), { active: false }))
+    await assertFails(setDoc(doc(db, `${SHOP}/members/staff-8`), { role: 'owner', name: 'Joy', active: true }))
+    await assertFails(deleteDoc(doc(db, `${SHOP}/members/staff-9`)))
+    await assertSucceeds(getDocs(collection(db, `${SHOP}/members`)))
+  })
+})
+

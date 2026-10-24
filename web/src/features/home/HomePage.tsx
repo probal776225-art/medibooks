@@ -10,6 +10,7 @@ import { useT, type MessageKey } from '../../i18n'
 import { useFormat } from '../../i18n/format'
 import { useDataStore } from '../../stores/data'
 import { DueText } from '../customers/parts'
+import { useIsStaff } from '../../stores/role'
 import { BackupReminder } from './BackupReminder'
 
 /** Today's transactions, live (Asia/Dhaka day). Re-subscribes when the date changes. */
@@ -42,6 +43,7 @@ function Stat({ label, value, sub, tone }: { label: string; value: string; sub?:
 
 export function HomePage() {
   const t = useT()
+  const isStaff = useIsStaff()
   const f = useFormat()
   const customers = useDataStore((s) => s.customers)
   const [query, setQuery] = useState('')
@@ -89,14 +91,14 @@ export function HomePage() {
       )}
 
       <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label={t('home.marketDue')} value={f.money(total)} tone="text-rose-700" />
+        {!isStaff && <Stat label={t('home.marketDue')} value={f.money(total)} tone="text-rose-700" />}
         <Stat
           label={t('home.todaySale')}
           value={sum ? f.money(sum.bakiGivenPaisa) : dash}
           sub={sum ? t('home.todayCounts', { sales: sum.saleCount, payments: sum.paymentCount }) : undefined}
         />
         <Stat label={t('home.todayPaid')} value={sum ? f.money(sum.collectedPaisa) : dash} tone="text-emerald-700" />
-        <Stat label={t('home.todayReminders')} value={dash} sub={t('home.remindersLater')} tone="text-slate-300" />
+        {!isStaff && <Stat label={t('home.todayReminders')} value={dash} sub={t('home.remindersLater')} tone="text-slate-300" />}
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
@@ -114,7 +116,7 @@ export function HomePage() {
         </Link>
       </div>
 
-      <BackupReminder />
+      {!isStaff && <BackupReminder />}
 
       <div className="mt-6 flex items-baseline justify-between">
         <h2 className="text-lg font-semibold">{t('home.recent')}</h2>

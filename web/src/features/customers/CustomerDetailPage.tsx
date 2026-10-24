@@ -7,6 +7,7 @@ import { setCustomerFlags } from '../../data/repos/customers'
 import { useT } from '../../i18n'
 import { useFormat } from '../../i18n/format'
 import { useDataStore } from '../../stores/data'
+import { useIsOwner } from '../../stores/role'
 import { useToastStore } from '../../stores/toast'
 import { ChangeMobileDialog } from './ChangeMobileDialog'
 import { CustomerForm } from './CustomerForm'
@@ -25,6 +26,7 @@ export function CustomerDetailPage() {
   const [editing, setEditing] = useState(false)
   const [changingMobile, setChangingMobile] = useState(false)
   const [showStatement, setShowStatement] = useState(false)
+  const isOwner = useIsOwner()
 
   if (!customer) {
     return (
@@ -64,9 +66,11 @@ export function CustomerDetailPage() {
         </Card>
       ) : (
         <CustomerSummary customer={customer}>
-          <Button variant="ghost" className="mt-2 -ml-2" onClick={() => setEditing(true)}>
-            {t('customer.edit')}
-          </Button>
+          {isOwner && (
+            <Button variant="ghost" className="mt-2 -ml-2" onClick={() => setEditing(true)}>
+              {t('customer.edit')}
+            </Button>
+          )}
         </CustomerSummary>
       )}
 
@@ -80,32 +84,38 @@ export function CustomerDetailPage() {
         <a href={`tel:${customer.mobile}`} className={buttonClass('outline', 'min-h-14')}>
           {t('customer.call')}
         </a>
-        <Button variant="ghost" className="border border-slate-200" onClick={() => setShowStatement(true)}>
-          {t('customer.statement')}
-        </Button>
-        <Button variant="ghost" disabled className="border border-slate-200">
-          {t('customer.remindNow')}
-        </Button>
+        {isOwner && (
+          <Button variant="ghost" className="border border-slate-200" onClick={() => setShowStatement(true)}>
+            {t('customer.statement')}
+          </Button>
+        )}
+        {isOwner && (
+          <Button variant="ghost" disabled className="border border-slate-200">
+            {t('customer.remindNow')}
+          </Button>
+        )}
       </div>
 
-      <Card className="divide-y divide-slate-100 py-1">
-        <Toggle
-          label={t('customer.sms')}
-          checked={customer.smsEnabled}
-          onChange={(v) => setCustomerFlags(customer, { smsEnabled: v })}
-        />
-        <Toggle
-          label={t('customer.reminder')}
-          checked={customer.reminderEnabled}
-          onChange={(v) => setCustomerFlags(customer, { reminderEnabled: v })}
-        />
-      </Card>
+      {isOwner && (
+        <Card className="divide-y divide-slate-100 py-1">
+          <Toggle
+            label={t('customer.sms')}
+            checked={customer.smsEnabled}
+            onChange={(v) => setCustomerFlags(customer, { smsEnabled: v })}
+          />
+          <Toggle
+            label={t('customer.reminder')}
+            checked={customer.reminderEnabled}
+            onChange={(v) => setCustomerFlags(customer, { reminderEnabled: v })}
+          />
+        </Card>
+      )}
 
       <PrescriptionSection customer={customer} />
 
       <CustomerLedger customer={customer} />
 
-      {!customer.movedTo && (
+      {isOwner && !customer.movedTo && (
         <div className="grid gap-2 sm:grid-cols-2">
           <Button variant="ghost" className="border border-slate-200" onClick={() => setChangingMobile(true)}>
             {t('mob.change')}

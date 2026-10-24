@@ -1,7 +1,8 @@
 rules_version = '2';
 
 // Pharmacy Baki Khata — security rules (docs/ARCHITECTURE.md §3).
-// v1: one owner, UID hard-coded below. Replace the placeholder with your real UID before deploying.
+// One owner, UID hard-coded below (npm run deploy fills in the real UID). Staff (Phase 14) are users with an
+// active members/{uid} doc: they sell and take payments, see only their own transactions, change nothing else.
 // The emulator seed creates a test owner with this exact UID, so local testing works as-is.
 // The Cloudflare Worker uses a service account and is not affected by these rules.
 service cloud.firestore {
@@ -21,8 +22,35 @@ service cloud.firestore {
 
     match /shops/{shopId} {
 
+      function staffDoc() {
+        return /databases/$(database)/documents/shops/$(shopId)/members/$(request.auth.uid);
+      }
+      // An active staff member (one extra document read per request; never for the owner).
+      function isStaff() {
+        return request.auth != null && exists(staffDoc())
+          && get(staffDoc()).data.role == 'staff' && get(staffDoc()).data.active == true;
+      }
+      function isUser() {
+        return isOwner() || isStaff();
+      }
+      // Staff writes carry their own uid.
+      function staffWrite(field) {
+        return isStaff() && request.resource.data[field] == request.auth.uid;
+      }
+
       match /settings/{settingsId} {
-        allow read, create, update: if isOwner();
+        allow read: if isUser();
+        allow create, update: if isOwner();
+      }
+
+      match /members/{memberId} {
+        // The owner manages staff; a staff member may read only their own record (to know their role).
+        allow read: if isOwner() || (request.auth != null && request.auth.uid == memberId);
+        allow create, update: if isOwner()
+          && request.resource.data.role == 'staff'
+          && request.resource.data.active is bool
+          && request.resource.data.name is string && request.resource.data.name.size() > 0;
+        allow delete: if false;
       }
 
       match /customers/{mobile} {
@@ -33,20 +61,23 @@ service cloud.firestore {
             && d.name is string && d.name.size() > 0 && d.name.size() <= 100
             && d.totalDuePaisa is int;
         }
-        allow read: if isOwner();
-        allow create: if isOwner() && validCustomer();
+        allow read: if isUser();
+        allow create: if isUser() && validCustomer();
         // Mobile can never change in place (change-mobile moves the doc in Phase 6).
         // Keep update rules loose otherwise: a rejected offline batch would silently drop its transaction
         // (e.g. two devices creating the same customer offline both send createdAt).
-        allow update: if isOwner() && validCustomer() && unchanged(['mobile']);
+        allow update: if (isOwner() && validCustomer() && unchanged(['mobile']))
+          // Staff: only what a sale or payment changes (due via increment, last activity).
+          || (isStaff() && validCustomer() && onlyChanges(['totalDuePaisa', 'lastTxnAt', 'lastPaymentAt', 'updatedAt']));
         allow delete: if false;
       }
 
       // Append-only. Amounts never change. Allowed edits: a one-time void, or moving the transaction to the
       // customer's new mobile number (change-mobile, Phase 6) — nothing else in the same write.
       match /transactions/{txnId} {
-        allow read: if isOwner();
-        allow create: if isOwner()
+        // Staff see only their own transactions (their queries must filter createdBy == their uid).
+        allow read: if isOwner() || (isStaff() && resource.data.createdBy == request.auth.uid);
+        allow create: if (isOwner() || staffWrite('createdBy'))
           && request.resource.data.voided == false
           && request.resource.data.effectPaisa is int;
         allow update: if isOwner() && (
@@ -63,7 +94,13 @@ service cloud.firestore {
 
       // Never deleted; deactivate with status instead.
       match /medicines/{medicineId} {
-        allow read, create, update: if isOwner();
+        allow read: if isUser();
+        // Staff may add a medicine (e.g. from the MedEx list) but never set the shop's own prices.
+        allow create: if isOwner() || (isStaff()
+          && request.resource.data.shopUnitPricePaisa == null
+          && request.resource.data.shopStripPricePaisa == null
+          && request.resource.data.shopPackPricePaisa == null);
+        allow update: if isOwner();
         allow delete: if false;
       }
 
@@ -74,23 +111,27 @@ service cloud.firestore {
 
       // Create-only logs.
       match /auditLog/{entryId} {
-        allow read, create: if isOwner();
+        allow read: if isOwner();
+        allow create: if isOwner() || staffWrite('by');
         allow update, delete: if false;
       }
 
       match /medicinePriceHistory/{entryId} {
-        allow read, create: if isOwner();
+        allow read: if isUser();
+        allow create: if isOwner();
         allow update, delete: if false;
       }
 
       // Reference list (e.g. the MedEx file, used with written permission) packed into a few chunk docs.
       // Not financial data: chunks of an old version are deleted when a new file is uploaded.
       match /refCatalog/{source} {
-        allow read, create, update: if isOwner();
+        allow read: if isUser();
+        allow create, update: if isOwner();
         allow delete: if false;
 
         match /chunks/{chunkId} {
-          allow read, create, update, delete: if isOwner();
+          allow read: if isUser();
+          allow create, update, delete: if isOwner();
         }
       }
 
@@ -112,8 +153,8 @@ service cloud.firestore {
             && d.thumb is bytes && d.thumb.size() <= 60000
             && d.note is string && d.note.size() <= 200;
         }
-        allow read: if isOwner();
-        allow create: if isOwner() && validPrescription();
+        allow read: if isUser();
+        allow create: if (isOwner() || staffWrite('createdBy')) && validPrescription();
         // Edit the note, or move to the customer's new mobile number (change-mobile) — nothing else.
         allow update: if isOwner() && (
           (onlyChanges(['note']) && request.resource.data.note is string && request.resource.data.note.size() <= 200)
@@ -123,19 +164,23 @@ service cloud.firestore {
       }
 
       match /prescriptionImages/{imageId} {
-        allow read, delete: if isOwner();
-        allow create: if isOwner() && request.resource.data.image is bytes && request.resource.data.image.size() <= 900000;
+        allow read: if isUser();
+        allow delete: if isOwner();
+        allow create: if (isOwner() || staffWrite('createdBy'))
+          && request.resource.data.image is bytes && request.resource.data.image.size() <= 900000;
         // Only an identical re-write (a resumed restore); the photo itself never changes.
         allow update: if isOwner() && request.resource.data.diff(resource.data).affectedKeys().size() == 0;
       }
 
       // Counters kept with increment() (e.g. how much space the photos use).
       match /stats/{statId} {
-        allow read, create, update: if isOwner();
+        allow read: if isOwner();
+        allow create, update: if isOwner() || (isStaff()
+          && request.resource.data.keys().hasOnly(['prescriptionCount', 'prescriptionBytes', 'updatedAt']));
         allow delete: if false;
       }
 
-      // members (Phase 14), portalLinks, stock*: reserved, closed until their phase.
+      // portalLinks, stock*: reserved, closed until their phase.
     }
   }
 }
