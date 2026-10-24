@@ -624,7 +624,6 @@ export const bn = {
   'staff.addMedPriced': 'MedEx দাম: {price}। দোকানের দাম মালিক ঠিক করবেন; বিলে দাম হাতে বদলাতে পারবেন।',
   'staff.addMedNoPrice': 'এই ওষুধের দাম নেই — বিলে দাম লিখে দিন। দোকানের দাম মালিক ঠিক করবেন।',
   'med.filter.catalog': 'সব ওষুধ',
-  'alt.button': 'বিকল্প',
   'alt.title': 'একই জেনেরিক / বিকল্প',
   'alt.same': 'সরাসরি বিকল্প — {generic} {strength}',
   'alt.other': 'একই জেনেরিক, অন্য শক্তি বা ধরন',
@@ -633,6 +632,11 @@ export const bn = {
   'alt.note': 'বিকল্প দেওয়ার আগে ডাক্তারের লেখা আর রোগীর সাথে মিলিয়ে নিন।',
   'alt.medexList': 'MedEx তালিকা',
   'alt.medexNote': 'MedEx তালিকা থেকে — বিক্রি বা এডিট করলে দোকানের তালিকায় উঠে যাবে',
+  'sale.unfinished': 'আগের একটা অসমাপ্ত বিল খোলা আছে ({count}টি আইটেম), এখনো সেভ হয়নি।',
+  'sale.unfinishedFor': '{name}-এর একটা অসমাপ্ত বিল খোলা আছে ({count}টি আইটেম), এখনো সেভ হয়নি।',
+  'sale.startNew': 'নতুন বিল শুরু করুন',
+  'sale.startNewFor': '{name}-এর জন্য নতুন বিল',
+  'sale.keepUnfinished': 'আগের বিলটাই চালিয়ে যান',
 } as const
 
 export type MessageKey = keyof typeof bn

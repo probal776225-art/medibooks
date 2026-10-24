@@ -625,7 +625,6 @@ export const en: Messages = {
   'staff.addMedPriced': 'MedEx price: {price}. The owner sets the shop\'s price; you can change the price on the bill.',
   'staff.addMedNoPrice': 'This medicine has no price — type it on the bill. The owner sets the shop\'s price.',
   'med.filter.catalog': 'All medicines',
-  'alt.button': 'Alternatives',
   'alt.title': 'Same generic / alternatives',
   'alt.same': 'Direct alternatives — {generic} {strength}',
   'alt.other': 'Same generic, other strength or form',
@@ -634,4 +633,9 @@ export const en: Messages = {
   'alt.note': 'Check with the prescription and the patient before giving an alternative.',
   'alt.medexList': 'MedEx list',
   'alt.medexNote': 'From the MedEx list — selling or editing it adds it to the shop list',
+  'sale.unfinished': 'An unfinished bill from before is open ({count} items), not saved yet.',
+  'sale.unfinishedFor': 'An unfinished bill for {name} is open ({count} items), not saved yet.',
+  'sale.startNew': 'Start a new bill',
+  'sale.startNewFor': 'New bill for {name}',
+  'sale.keepUnfinished': 'Continue that bill',
 }

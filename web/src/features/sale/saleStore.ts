@@ -25,10 +25,19 @@ useSaleStore.subscribe((s, prev) => {
   }, 300)
 })
 
+/** An unfinished bill older than this is treated as abandoned and not brought back. */
+const DRAFT_MAX_AGE_MS = 6 * 60 * 60 * 1000
+
 export async function loadSaleDraft(): Promise<void> {
   if (useSaleStore.getState().loaded) return
   const row = await localDb.drafts.get('sale').catch(() => undefined)
-  useSaleStore.setState({ draft: row?.key === 'sale' ? { ...EMPTY_DRAFT, ...row.draft } : EMPTY_DRAFT, loaded: true })
+  const fresh = row?.key === 'sale' && Date.now() - row.savedAt < DRAFT_MAX_AGE_MS
+  useSaleStore.setState({ draft: fresh ? { ...EMPTY_DRAFT, ...row.draft } : EMPTY_DRAFT, loaded: true })
+}
+
+/** True when the bill has anything in it (items, an amount, a discount or money paid). */
+export function draftHasContent(d: SaleDraft): boolean {
+  return d.lines.length > 0 || Boolean(d.amountText.trim()) || Boolean(d.paidText.trim())
 }
 
 export function patchDraft(patch: Partial<SaleDraft>): void {
@@ -62,7 +71,14 @@ export function addFreeTextLine(name = ''): void {
   }))
 }
 
-/** Start a fresh bill (optionally for a customer). */
+/**
+ * Start a fresh bill (optionally for a customer). The empty bill is written to the device at once — not after
+ * the usual short delay — so a saved bill's medicines can never come back if the app is closed right away.
+ */
 export function resetDraft(customerMobile: string | null = null): void {
-  useSaleStore.setState({ draft: { ...EMPTY_DRAFT, customerMobile } })
+  const draft = { ...EMPTY_DRAFT, customerMobile }
+  useSaleStore.setState({ draft })
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = null
+  void localDb.drafts.put({ key: 'sale', draft, savedAt: Date.now() }).catch((e: unknown) => console.error('Draft save failed', e))
 }

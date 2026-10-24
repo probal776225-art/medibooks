@@ -42,7 +42,8 @@ function AddPhotoDialog({ photo, onSave, onClose }: { photo: ShrunkPhoto; onSave
   )
 }
 
-export function PrescriptionSection({ customer }: { customer: Customer }) {
+/** `compact` (New Invoice): only the newest photos, so the bill stays in view. */
+export function PrescriptionSection({ customer, compact = false }: { customer: Customer; compact?: boolean }) {
   const t = useT()
   const f = useFormat()
   const showToast = useToastStore((s) => s.show)
@@ -107,7 +108,7 @@ export function PrescriptionSection({ customer }: { customer: Customer }) {
         <p className="mt-3 text-sm text-slate-500">{t('rx.empty')}</p>
       ) : (
         <ul className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
-          {list.map((p) => (
+          {(compact ? list.slice(0, 4) : list).map((p) => (
             <li key={p.id}>
               <button type="button" onClick={() => setOpen(p)} className="block w-full text-left">
                 <img

@@ -16,11 +16,12 @@ import { CustomerSummary } from '../customers/CustomerSummary'
 import { MobileLookup } from '../customers/MobileLookup'
 import { DueText } from '../customers/parts'
 import { MedicineSearch } from '../medicines/MedicineSearch'
+import { PrescriptionSection } from '../prescriptions/PrescriptionSection'
 import { QuickAddMedicine } from '../medicines/QuickAddMedicine'
 import { BillSummary } from './BillSummary'
 import { SaleLineRow } from './SaleLineRow'
 import { SavedSheet } from './SavedSheet'
-import { addFreeTextLine, addMedicineLine, loadSaleDraft, patchDraft, resetDraft, useSaleStore } from './saleStore'
+import { addFreeTextLine, addMedicineLine, draftHasContent, loadSaleDraft, patchDraft, resetDraft, useSaleStore } from './saleStore'
 
 const SEARCH_ID = 'sale-medicine-search'
 
@@ -36,6 +37,8 @@ export function NewSalePage() {
   const [tried, setTried] = useState(false)
   const [saveError, setSaveError] = useState<MessageKey | null>(null)
   const [saved, setSaved] = useState<TransactionDraft | null>(null)
+  // An unfinished bill brought back from an earlier visit: ask before it is used for anyone.
+  const [restored, setRestored] = useState<boolean | null>(null)
 
   const customer = draft.customerMobile ? byMobile.get(draft.customerMobile) : undefined
   const ev = useMemo(() => evaluateDraft(draft, medicines, roundToTaka), [draft, medicines, roundToTaka])
@@ -43,6 +46,9 @@ export function NewSalePage() {
   useEffect(() => {
     void loadSaleDraft()
   }, [])
+  useEffect(() => {
+    if (loaded && restored === null) setRestored(draftHasContent(useSaleStore.getState().draft))
+  }, [loaded, restored])
 
   // A save error belongs to the bill as it was; any edit clears it (live problems still show after a save attempt).
   useEffect(() => setSaveError(null), [draft])
@@ -113,6 +119,31 @@ export function NewSalePage() {
         )}
       </div>
 
+      {restored && (
+        <div className="mt-3 rounded-2xl border border-amber-300 bg-amber-50 p-3">
+          <p className="text-amber-900">
+            {customer
+              ? t('sale.unfinishedFor', { name: customer.name, count: draft.lines.length })
+              : t('sale.unfinished', { count: draft.lines.length })}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button
+              onClick={() => {
+                resetDraft(paramMobile)
+                setRestored(false)
+              }}
+            >
+              {paramMobile && byMobile.get(paramMobile)
+                ? t('sale.startNewFor', { name: byMobile.get(paramMobile)!.name })
+                : t('sale.startNew')}
+            </Button>
+            <Button variant="ghost" className="border border-amber-300" onClick={() => setRestored(false)}>
+              {t('sale.keepUnfinished')}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_360px] md:items-start">
         <div className="space-y-4">
           {/* Step 1: customer */}
@@ -147,6 +178,8 @@ export function NewSalePage() {
               {tried && !customer && <p className="mt-2 text-sm text-rose-600">{t('customer.mobileHint')}</p>}
             </Card>
           )}
+
+          {customer && <PrescriptionSection customer={customer} compact />}
 
           {/* Step 2: what was given */}
           <div className="flex overflow-hidden rounded-xl border border-slate-300 bg-white" role="radiogroup">

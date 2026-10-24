@@ -67,6 +67,7 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 
 - **নতুন বাকি:** mobile number likhun → purono customer hole tar baki dekhabe, notun hole nam din → oshudh khujun → পিস / স্ট্রিপ / বক্স / কাস্টম → dorkar hole dam bodlan → discount → **এখন জমা** (jodi kichu dey) ar kivabe dilo (Cash / bKash …) → **সেভ করুন**.
 - Dam bodlale "এই দাম দোকানের দাম হিসেবে সেভ করুন" chaple porer bar oi dam-i ashbe.
+- **Save na kora bill:** bill save na kore onno page e gele bill ta phone e thake. Porer bar নতুন বাকি khulle holud box e jiggesh korbe — **নতুন বিল শুরু করুন** (purono oshudh muche) ba **আগের বিলটাই চালিয়ে যান**. Save korle bill sathe sathe khali hoy; 6 ghontar purono asomapto bill nijei muche jay.
 - Oshudh list e nei? Search e nam likhle nicher **MedEx তালিকা থেকে** theke **যোগ করুন** chapun — MedEx er dam thakle nijei boshe jabe.
 - **মেমোর ছবি / রসিদের ছবি:** save er por sheet e ba customer er **লেনদেনের হিসাব** e lenden e tap kore → **শেয়ার করুন** → WhatsApp.
 - **স্টেটমেন্ট:** customer page → **স্টেটমেন্ট** → এই মাস / গত মাস / সব সময় → **ছবি তৈরি করুন** → share.
@@ -105,6 +106,7 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 ## 7. Prescription er chhobi
 
 - Customer page → **প্রেসক্রিপশন** → **ছবি তুলুন** (phone er camera) ba **গ্যালারি থেকে** (PC te file).
+- **নতুন বাকি** te customer bechhe nileo **প্রেসক্রিপশন** ongsho ashe — bill banate banate chhobi tola jay, ar shesh 4 ta chhobi dekha jay.
 - Chhobi phone ei chhoto hoye jay (prai 100–400 KB), tarpor note (jemon daktar er nam) dile **সেভ করুন**. Internet na thakleo save hoy, pore nije upload hoy.
 - Chhoto chhobi te chap dile boro hoy; chhobi te abar chap dile zoom. **শেয়ার করুন** / **ছবি সেভ করুন**.
 - Bhul chhobi: boro chhobi → **ছবি মুছুন** → **হ্যাঁ, মুছুন**. Muchle ar fire ashe na.
@@ -124,7 +126,7 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 ## 9. Oshudh ar dam
 
 - **ওষুধ → সব ওষুধ:** dokaner oshudh ar MedEx er sob oshudh ek sathe. MedEx er oshudh ("MedEx" chinho) alada kore jog korte hoy na — bill e sorasori tola jay; prothombar bikri ba **এডিট** korle nijei dokaner list e uthe jay.
-- **একই জেনেরিক / বিকল্প:** oshudher page e niche dekhabe eki generic ar strength er onno brand (sostar ta age), ar onno strength/dhoron. Bill e protiti line e **বিকল্প** chapleo list ashe; ekta bechhe nile line bodle jay, dam o. Internet chara o kaj kore.
+- **একই জেনেরিক / বিকল্প:** oshudher page e (ওষুধ → oshudh) niche dekhabe eki generic ar strength er onno brand (sostar ta age), ar onno strength/dhoron. Internet chara o kaj kore.
 - Bikolpo deyar age daktar er lekha ar rogi er sathe miliye nin.
 
 - **Nijer dam:** ওষুধ → oshudh → এডিট → dam. Import e apnar dam kokhono bodlay na.

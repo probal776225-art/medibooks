@@ -175,7 +175,9 @@ Full design: `docs/ARCHITECTURE.md` §0, §5, §6. Kaggle is **not** used.
 ## 15b. Same-generic alternatives and the full medicine list (2026-10-24)
 - ওষুধ → **সব ওষুধ** (default): the shop's medicines and the whole MedEx list together; no "যোগ করুন" step. A MedEx medicine opens, sells and (owner) edits like a shop one and joins the shop list the first time it is used.
 - Medicine page → **একই জেনেরিক / বিকল্প**: direct alternatives (same generic + strength + form, cheapest first) and other strengths/forms, with prices; tap to open.
-- Bill line → **বিকল্প**: pick another brand to replace the line (price updates). Works offline. A note reminds to check with the prescription and the patient.
+- Alternatives are on the medicine page only (not in the bill — owner's choice, 2026-10-24). Works offline. A note reminds to check with the prescription and the patient.
+- New Invoice: once a customer is chosen, a compact **প্রেসক্রিপশন** section (take/pick a photo, newest 4 photos) — the photo is saved on the customer.
+- A bill not saved is kept on the device (dead battery), but when New Invoice opens with such a bill from an earlier visit it asks first: "<name>-এর একটা অসমাপ্ত বিল খোলা আছে" → **নতুন বিল শুরু করুন** (for the customer you came from) / **আগের বিলটাই চালিয়ে যান**. Unfinished bills older than 6 hours are dropped; after a save the empty bill is written to the device at once.
 
 ## 16. Staff accounts (Phase 14)
 - Settings → **স্টাফ**: add a staff member (name, email, password), turn a staff member off/on.
