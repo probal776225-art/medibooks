@@ -1,5 +1,6 @@
 // Backup file (SPEC §12): every shop document as JSON, plus checks before a restore.
-// Firestore timestamps are written as {"$ts": [seconds, nanoseconds]} so they come back exactly.
+// Firestore timestamps are written as {"$ts": [seconds, nanoseconds]} so they come back exactly, and bytes
+// (prescription photos) as {"$bytes": base64}.
 import { csvLine, taka } from './reports'
 import type { Customer, Millis, Paisa } from './types'
 
@@ -16,7 +17,12 @@ export const BACKUP_COLLECTIONS = [
   'medicinePriceHistory',
   'medicineImports',
   'auditLog',
+  'prescriptions',
+  'prescriptionImages',
+  'stats',
 ] as const
+/** The prescription photos and their usage counter; the owner may leave them out of a backup to keep it small. */
+export const PHOTO_COLLECTIONS: readonly BackupCollection[] = ['prescriptions', 'prescriptionImages', 'stats']
 export type BackupCollection = (typeof BACKUP_COLLECTIONS)[number]
 
 export interface BackupDoc {
@@ -42,29 +48,40 @@ export interface TimestampLike {
 }
 
 type IsTimestamp = (v: unknown) => v is TimestampLike
+/** Firestore bytes → base64, or null when the value is not bytes. */
+type BytesToBase64 = (v: unknown) => string | null
 
-/** Firestore data → plain JSON. Timestamps become {"$ts": [s, ns]}; everything else is kept as is. */
-export function encodeValue(v: unknown, isTimestamp: IsTimestamp): unknown {
+/** Firestore data → plain JSON. Timestamps become {"$ts": [s, ns]}, bytes {"$bytes": base64}; the rest is kept. */
+export function encodeValue(v: unknown, isTimestamp: IsTimestamp, bytesToBase64: BytesToBase64 = () => null): unknown {
   if (isTimestamp(v)) return { $ts: [v.seconds, v.nanoseconds] }
-  if (Array.isArray(v)) return v.map((x) => encodeValue(x, isTimestamp))
+  const b64 = bytesToBase64(v)
+  if (b64 !== null) return { $bytes: b64 }
+  if (Array.isArray(v)) return v.map((x) => encodeValue(x, isTimestamp, bytesToBase64))
   if (v !== null && typeof v === 'object') {
     const out: Record<string, unknown> = {}
-    for (const [k, x] of Object.entries(v)) out[k] = encodeValue(x, isTimestamp)
+    for (const [k, x] of Object.entries(v)) out[k] = encodeValue(x, isTimestamp, bytesToBase64)
     return out
   }
   return v
 }
 
 /** The reverse of encodeValue. */
-export function decodeValue(v: unknown, makeTimestamp: (seconds: number, nanoseconds: number) => unknown): unknown {
-  if (Array.isArray(v)) return v.map((x) => decodeValue(x, makeTimestamp))
+export function decodeValue(
+  v: unknown,
+  makeTimestamp: (seconds: number, nanoseconds: number) => unknown,
+  makeBytes: (base64: string) => unknown = (b) => b,
+): unknown {
+  if (Array.isArray(v)) return v.map((x) => decodeValue(x, makeTimestamp, makeBytes))
   if (v !== null && typeof v === 'object') {
+    const single = Object.keys(v).length === 1
     const ts = (v as { $ts?: unknown }).$ts
-    if (Object.keys(v).length === 1 && Array.isArray(ts) && ts.length === 2 && ts.every((n) => typeof n === 'number')) {
+    if (single && Array.isArray(ts) && ts.length === 2 && ts.every((n) => typeof n === 'number')) {
       return makeTimestamp(ts[0] as number, ts[1] as number)
     }
+    const bytes = (v as { $bytes?: unknown }).$bytes
+    if (single && typeof bytes === 'string') return makeBytes(bytes)
     const out: Record<string, unknown> = {}
-    for (const [k, x] of Object.entries(v)) out[k] = decodeValue(x, makeTimestamp)
+    for (const [k, x] of Object.entries(v)) out[k] = decodeValue(x, makeTimestamp, makeBytes)
     return out
   }
   return v
@@ -86,6 +103,8 @@ export function parseBackup(text: string, shopId: string): { backup: BackupFile 
   const cols = b.collections
   if (!cols || typeof b.backupId !== 'string' || typeof b.exportedAt !== 'number') return { problem: 'broken' }
   for (const name of BACKUP_COLLECTIONS) {
+    // Files from before a collection existed (photos, stats) simply have none.
+    if (cols[name] === undefined) cols[name] = []
     const docs = cols[name]
     if (!Array.isArray(docs)) return { problem: 'broken' }
     for (const d of docs as unknown[]) {

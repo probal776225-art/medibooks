@@ -5,7 +5,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing'
-import { deleteDoc, doc, getDoc, increment, setDoc, updateDoc, writeBatch } from 'firebase/firestore'
+import { Bytes, deleteDoc, doc, getDoc, increment, setDoc, updateDoc, writeBatch } from 'firebase/firestore'
 import { readFileSync } from 'node:fs'
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest'
 
@@ -156,5 +156,53 @@ describe('logs and medicines', () => {
     await assertSucceeds(setDoc(doc(owner(), `${SHOP}/smsQueue/s1`), { status: 'pending' }))
     await assertFails(updateDoc(doc(owner(), `${SHOP}/smsQueue/s1`), { status: 'sent' }))
     await assertFails(deleteDoc(doc(owner(), `${SHOP}/smsQueue/s1`)))
+  })
+})
+
+describe('prescription photos', () => {
+  const bytes = (n: number) => Bytes.fromUint8Array(new Uint8Array(n))
+  const meta = (over: Record<string, unknown> = {}) => ({
+    customerId: MOBILE,
+    note: 'ডা. করিম',
+    thumb: bytes(20_000),
+    width: 1400,
+    height: 1000,
+    imageBytes: 300_000,
+    ...over,
+  })
+
+  it('owner adds a photo with its thumbnail; strangers cannot see it', async () => {
+    const db = owner()
+    const batch = writeBatch(db)
+    batch.set(doc(db, `${SHOP}/prescriptions/p1`), meta())
+    batch.set(doc(db, `${SHOP}/prescriptionImages/p1`), { image: bytes(300_000) })
+    batch.set(doc(db, `${SHOP}/stats/usage`), { prescriptionCount: increment(1), prescriptionBytes: increment(320_000) }, { merge: true })
+    await assertSucceeds(batch.commit())
+    await assertSucceeds(getDoc(doc(owner(), `${SHOP}/prescriptionImages/p1`)))
+    await assertFails(getDoc(doc(stranger(), `${SHOP}/prescriptions/p1`)))
+    await assertFails(getDoc(doc(stranger(), `${SHOP}/prescriptionImages/p1`)))
+    await assertFails(setDoc(doc(stranger(), `${SHOP}/prescriptionImages/p2`), { image: bytes(10) }))
+  })
+
+  it('checks sizes, the mobile number and the note', async () => {
+    await assertFails(setDoc(doc(owner(), `${SHOP}/prescriptions/p2`), meta({ thumb: bytes(70_000) })))
+    await assertFails(setDoc(doc(owner(), `${SHOP}/prescriptions/p2`), meta({ customerId: '1234' })))
+    await assertFails(setDoc(doc(owner(), `${SHOP}/prescriptions/p2`), meta({ note: 'x'.repeat(201) })))
+    await assertFails(setDoc(doc(owner(), `${SHOP}/prescriptionImages/p2`), { image: bytes(950_000) }))
+    await assertFails(setDoc(doc(owner(), `${SHOP}/prescriptionImages/p2`), { image: 'not bytes' }))
+  })
+
+  it('only the note or the customer mobile can change; the photo never; owner may delete', async () => {
+    await assertSucceeds(setDoc(doc(owner(), `${SHOP}/prescriptions/p3`), meta()))
+    await assertSucceeds(setDoc(doc(owner(), `${SHOP}/prescriptionImages/p3`), { image: bytes(1000) }))
+    await assertSucceeds(updateDoc(doc(owner(), `${SHOP}/prescriptions/p3`), { note: 'নতুন নোট' }))
+    await assertSucceeds(updateDoc(doc(owner(), `${SHOP}/prescriptions/p3`), { customerId: '01811111111' }))
+    await assertFails(updateDoc(doc(owner(), `${SHOP}/prescriptions/p3`), { customerId: 'bad' }))
+    await assertFails(updateDoc(doc(owner(), `${SHOP}/prescriptions/p3`), { width: 10 }))
+    await assertFails(updateDoc(doc(owner(), `${SHOP}/prescriptionImages/p3`), { image: bytes(10) }))
+    await assertSucceeds(setDoc(doc(owner(), `${SHOP}/prescriptionImages/p3`), { image: bytes(1000) }))
+    await assertSucceeds(deleteDoc(doc(owner(), `${SHOP}/prescriptionImages/p3`)))
+    await assertSucceeds(deleteDoc(doc(owner(), `${SHOP}/prescriptions/p3`)))
+    await assertFails(deleteDoc(doc(owner(), `${SHOP}/stats/usage`)))
   })
 })

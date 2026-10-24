@@ -29,7 +29,7 @@ Ei file e ache: ki ki automatic test hoy, SPEC §14 er checklist er kon item kiv
 | 11 | তাগাদা (৳5,000+ hole, sendHour e, intervalDays er age abar na) | ⏳ | Phase 8. |
 | 12 | মেমো + স্টেটমেন্ট PNG Bangla thik; Android e WhatsApp share | ✅ 📱 | Bangla juktakkhor thik (Phase 10, 12). WhatsApp share shudhu asol Android phone e check kora jabe. |
 | 13 | PIN lock; PC ar Android e install | ✅ 📱 | PIN: Phase 11 (lock, bhul PIN, 30 sec opekkha, idle lock, PIN ভুলে গেছি). Install er jonno HTTPS live site lagbe. |
-| 14 | Ekta shadharon diner por Firebase usage free limit er onek niche | 📱 | Live site e ek din chalanor por Firebase console e dekhte hobe (RUNBOOK §9). |
+| 14 | Ekta shadharon diner por Firebase usage free limit er onek niche | 📱 | Live site e ek din chalanor por Firebase console e dekhte hobe (RUNBOOK §10). |
 | + | Backup → khali database e restore → hubohu eki | ✅ | Phase 11: 7 ta collection er protiti document eki, mot baki eki, ব্যালেন্স যাচাই e gormil nei. |
 
 ### 22/10 er smoke test (Phase 12 er build)
@@ -58,4 +58,4 @@ Ei file e ache: ki ki automatic test hoy, SPEC §14 er checklist er kon item kiv
 4. Airplane mode bondho → header er "সিঙ্ক বাকি" 0 hoy kina dekhun → PC te same lenden gulo ashe kina dekhun.
 5. Ekta memo er ছবি WhatsApp e nijer number e share korun → Bangla thik ache kina dekhun.
 6. Settings → ব্যাকআপ নিন → file duita Google Drive e rakhun.
-7. Porer din Firebase console e usage dekhun (RUNBOOK §9).
+7. Porer din Firebase console e usage dekhun (RUNBOOK §10).

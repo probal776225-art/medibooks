@@ -14,6 +14,7 @@ import { normalizeMobile } from '../../domain/phone'
 import { SCHEMA_VERSION, type Customer } from '../../domain/types'
 import { customerFromDoc } from '../convert'
 import { paths } from '../paths'
+import { prescriptionRefsOf } from './prescriptions'
 import { auditInBatch, commitInBackground, newBatch, writeContext } from '../writer'
 
 export interface CustomersSnapshot {
@@ -122,12 +123,14 @@ export async function changeCustomerMobile(
   const ctx = writeContext()
 
   const snap = await getDocsFromServer(query(paths.transactions(), where('customerId', '==', c.mobile)))
+  // Prescription photos move with the customer too (rules allow a customerId-only update on both).
+  const refs = [...snap.docs.map((d) => d.ref), ...(await prescriptionRefsOf(c.mobile))]
   const docs = snap.docs
-  for (let i = 0; i < docs.length; i += 400) {
+  for (let i = 0; i < refs.length; i += 400) {
     const batch = newBatch()
-    for (const d of docs.slice(i, i + 400)) batch.update(d.ref, { customerId: newMobile })
+    for (const ref of refs.slice(i, i + 400)) batch.update(ref, { customerId: newMobile })
     await batch.commit()
-    onProgress?.(Math.min(i + 400, docs.length), docs.length)
+    onProgress?.(Math.min(i + 400, refs.length), refs.length)
   }
 
   const batch = newBatch()
@@ -164,7 +167,7 @@ export async function changeCustomerMobile(
       entity: 'customer',
       entityId: c.mobile,
       before: { mobile: c.mobile, totalDuePaisa: c.totalDuePaisa },
-      after: { mobile: newMobile, transactionsMoved: docs.length },
+      after: { mobile: newMobile, transactionsMoved: docs.length, photosMoved: refs.length - docs.length },
     },
     ctx,
   )

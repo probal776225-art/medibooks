@@ -3,6 +3,7 @@
 // server already has. A restore only fills an EMPTY shop (a new Firebase project) — it never deletes or
 // changes existing data, and the security rules stay as strict as ever.
 import {
+  Bytes,
   doc,
   documentId,
   getDocFromServer,
@@ -25,6 +26,7 @@ import {
   BACKUP_APP,
   BACKUP_COLLECTIONS,
   BACKUP_FORMAT,
+  PHOTO_COLLECTIONS,
   decodeValue,
   encodeValue,
   liveVersion,
@@ -37,13 +39,17 @@ import { paths, SHOP_ID } from './paths'
 import { auditInBatch, newBatch, writeContext } from './writer'
 
 const PAGE = 1000
+/** Photos are up to ~0.7 MB each: fetch and write them in small groups. */
+const PHOTO_PAGE = 20
+const BATCH_PHOTO_BYTES = 6_000_000
 /** Firestore allows 500 writes per batch; stay well under. */
 const BATCH_WRITES = 400
 const RESTORE_MARKER_ID = 'restore'
 
 const isTimestamp = (v: unknown): v is Timestamp => v instanceof Timestamp
+const bytesToBase64 = (v: unknown) => (v instanceof Bytes ? v.toBase64() : null)
 const decode = (data: Record<string, unknown>) =>
-  decodeValue(data, (s, ns) => new Timestamp(s, ns)) as Record<string, unknown>
+  decodeValue(data, (s, ns) => new Timestamp(s, ns), (b64) => Bytes.fromBase64String(b64)) as Record<string, unknown>
 
 /** Every doc of a shop collection, straight from the server, 1000 at a time. */
 async function readAllFromServer(
@@ -51,12 +57,13 @@ async function readAllFromServer(
   onPage: (count: number) => void,
 ): Promise<{ id: string; data: DocumentData }[]> {
   const out: { id: string; data: DocumentData }[] = []
+  const page = name === 'prescriptionImages' ? PHOTO_PAGE : PAGE
   let last: string | null = null
   for (;;) {
     const base = paths.shopCollection(name)
     const q: Query = last
-      ? query(base, orderBy(documentId()), startAfter(last), limit(PAGE))
-      : query(base, orderBy(documentId()), limit(PAGE))
+      ? query(base, orderBy(documentId()), startAfter(last), limit(page))
+      : query(base, orderBy(documentId()), limit(page))
     const snap: QuerySnapshot = await getDocsFromServer(q)
     for (const d of snap.docs) {
       if (name === 'settings' && d.id === RESTORE_MARKER_ID) continue
@@ -64,20 +71,21 @@ async function readAllFromServer(
     }
     onPage(out.length)
     const tail: QueryDocumentSnapshot | undefined = snap.docs[snap.docs.length - 1]
-    if (snap.size < PAGE || !tail) return out
+    if (snap.size < page || !tail) return out
     last = tail.id
   }
 }
 
 export type BackupProgress = (collection: BackupCollection, count: number) => void
 
-export async function exportBackup(onProgress: BackupProgress): Promise<BackupFile> {
+/** `photos: false` leaves the prescription photos out (a much smaller file). */
+export async function exportBackup(onProgress: BackupProgress, opts: { photos: boolean } = { photos: true }): Promise<BackupFile> {
   const ctx = writeContext()
   const collections = {} as Record<BackupCollection, BackupDoc[]>
   const counts = {} as Record<BackupCollection, number>
   for (const name of BACKUP_COLLECTIONS) {
-    const docs = await readAllFromServer(name, (n) => onProgress(name, n))
-    collections[name] = docs.map((d) => ({ id: d.id, data: encodeValue(d.data, isTimestamp) as Record<string, unknown> }))
+    const docs = !opts.photos && PHOTO_COLLECTIONS.includes(name) ? [] : await readAllFromServer(name, (n) => onProgress(name, n))
+    collections[name] = docs.map((d) => ({ id: d.id, data: encodeValue(d.data, isTimestamp, bytesToBase64) as Record<string, unknown> }))
     counts[name] = docs.length
   }
   return {
@@ -133,13 +141,24 @@ export class RestoreError extends Error {
 }
 
 type Op = (batch: WriteBatch) => void
+interface WeightedOp {
+  run: Op
+  bytes: number
+}
+
+/** Size of a backed-up {"$bytes": base64} value once decoded. */
+const base64Bytes = (v: unknown) => {
+  const b64 = (v as { $bytes?: unknown } | null)?.$bytes
+  return typeof b64 === 'string' ? Math.ceil((b64.length * 3) / 4) : 0
+}
 
 const int = (v: unknown): number => (typeof v === 'number' && Number.isSafeInteger(v) ? v : 0)
 
 /**
  * Write the backup into the empty shop, in phases (each phase fully committed before the next):
  * settings, medicines and logs, customers (due via increment), transactions as live, then the voids
- * (rules only create live transactions; a void is the normal one-time update), then the audit entry.
+ * (rules only create live transactions; a void is the normal one-time update), prescription photos then their
+ * metadata, the usage counter, then the audit entry.
  */
 export async function restoreBackup(backup: BackupFile, onProgress: (written: number, total: number) => void): Promise<void> {
   const target = await checkRestoreTarget(backup.backupId)
@@ -150,7 +169,8 @@ export async function restoreBackup(backup: BackupFile, onProgress: (written: nu
   const existing = new Map<BackupCollection, Map<string, DocumentData>>()
   if (target === 'resume') {
     for (const name of BACKUP_COLLECTIONS) {
-      if (name === 'settings') continue
+      // Photos are not read back (too big): a photo is re-written unless its metadata (written after it) exists.
+      if (name === 'settings' || name === 'prescriptionImages' || name === 'stats') continue
       const docs = await readAllFromServer(name, () => undefined)
       existing.set(name, new Map(docs.map((d) => [d.id, d.data])))
     }
@@ -167,7 +187,7 @@ export async function restoreBackup(backup: BackupFile, onProgress: (written: nu
 
   const ref = (name: BackupCollection, id: string) => doc(paths.shopCollection(name), id)
   const cols = backup.collections
-  const phases: Op[][] = [
+  const phases: (Op | WeightedOp)[][] = [
     cols.settings.map((d) => (b) => b.set(ref('settings', d.id), decode(d.data))),
     [
       // updatedAt = now, so every device's medicine delta sync picks them up.
@@ -195,6 +215,14 @@ export async function restoreBackup(backup: BackupFile, onProgress: (written: nu
           voidReason: data.voidReason || '-',
         })
       }),
+    // Photos before their metadata, so "metadata exists" means the photo is there too.
+    cols.prescriptionImages
+      .filter((d) => !has('prescriptions', d.id))
+      .map((d) => ({ run: (b: WriteBatch) => b.set(ref('prescriptionImages', d.id), decode(d.data)), bytes: base64Bytes(d.data.image) })),
+    cols.prescriptions
+      .filter((d) => !has('prescriptions', d.id))
+      .map((d) => (b) => b.set(ref('prescriptions', d.id), decode(d.data))),
+    cols.stats.map((d) => (b) => b.set(ref('stats', d.id), decode(d.data))),
   ]
 
   const total = phases.reduce((n, p) => n + p.length, 0) + 1
@@ -202,14 +230,27 @@ export async function restoreBackup(backup: BackupFile, onProgress: (written: nu
   onProgress(written, total)
   try {
     for (const phase of phases) {
-      for (let i = 0; i < phase.length; i += BATCH_WRITES) {
-        const batch = newBatch()
-        const chunk = phase.slice(i, i + BATCH_WRITES)
-        for (const op of chunk) op(batch)
+      // A batch holds up to 400 writes and (for photos) ~6 MB, under Firestore's request limit.
+      let batch = newBatch()
+      let count = 0
+      let bytes = 0
+      const flush = async () => {
+        if (!count) return
         await batch.commit()
-        written += chunk.length
+        written += count
         onProgress(written, total)
+        batch = newBatch()
+        count = 0
+        bytes = 0
       }
+      for (const item of phase) {
+        const op = typeof item === 'function' ? { run: item, bytes: 0 } : item
+        if (count && (count >= BATCH_WRITES || bytes + op.bytes > BATCH_PHOTO_BYTES)) await flush()
+        op.run(batch)
+        count++
+        bytes += op.bytes
+      }
+      await flush()
     }
     const last = newBatch()
     auditInBatch(

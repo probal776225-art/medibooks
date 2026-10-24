@@ -102,7 +102,16 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 
 ---
 
-## 7. Oshudh ar dam
+## 7. Prescription er chhobi
+
+- Customer page → **প্রেসক্রিপশন** → **ছবি তুলুন** (phone er camera) ba **গ্যালারি থেকে** (PC te file).
+- Chhobi phone ei chhoto hoye jay (prai 100–400 KB), tarpor note (jemon daktar er nam) dile **সেভ করুন**. Internet na thakleo save hoy, pore nije upload hoy.
+- Chhoto chhobi te chap dile boro hoy; chhobi te abar chap dile zoom. **শেয়ার করুন** / **ছবি সেভ করুন**.
+- Bhul chhobi: boro chhobi → **ছবি মুছুন** → **হ্যাঁ, মুছুন**. Muchle ar fire ashe na.
+- সেটিংস → **জায়গা** te dekhben koto chhobi ache, ar free 1 GB er koto ongsho lagche. 70% er beshi hole holud satorkota ashbe.
+- Backup e chhobi o thake. File onek boro hole **"ছবিও ব্যাকআপে রাখুন"** tick tule din, tokhon chhobi chara baki sob thakbe.
+
+## 8. Oshudh ar dam
 
 - **Nijer dam:** ওষুধ → oshudh → এডিট → dam. Import e apnar dam kokhono bodlay na.
 - **Supplier er dam er file (CSV):** সেটিংস → ইমপোর্ট → ওষুধের দামের ফাইল.
@@ -111,14 +120,14 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 
 ---
 
-## 8. SMS
+## 9. SMS
 
 - SMS **ekhono chalu na** (Phase 7 — SMS provider thik hole hobe).
 - Chalu hole: SMS na gele age dekhben (1) customer er "SMS পাঠাবে" chalu kina, (2) SMS লগ e ki likha, (3) provider er balance. Ei ongsho tokhon puro kore lekha hobe.
 
 ---
 
-## 9. Firebase er free limit dekha
+## 10. Firebase er free limit dekha
 
 Spark (free) plan e protidin: **50,000 read, 20,000 write, 1 GiB data**. Card nei, tai kokhono taka katbe na. Limit pere gele oi diner baki shomoy server e lekha bondho thake (app offline er moto chole, data phone e jome thake). Limit protidin **Bangladesh shomoy dupur 1–2 tar dike** abar shuru hoy.
 
@@ -129,7 +138,7 @@ Dekhar niyom:
 
 ---
 
-## 10. Somossa hole
+## 11. Somossa hole
 
 | Somossa | Ki korben |
 |---|---|
@@ -142,7 +151,7 @@ Dekhar niyom:
 
 ---
 
-## 11. Notun version deploy (developer)
+## 12. Notun version deploy (developer)
 
 ```bash
 cd ~/Claude/pharmacy-baki

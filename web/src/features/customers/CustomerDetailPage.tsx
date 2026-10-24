@@ -12,6 +12,7 @@ import { ChangeMobileDialog } from './ChangeMobileDialog'
 import { CustomerForm } from './CustomerForm'
 import { CustomerLedger } from './CustomerLedger'
 import { CustomerSummary } from './CustomerSummary'
+import { PrescriptionSection } from '../prescriptions/PrescriptionSection'
 import { StatementDialog } from '../print/StatementDialog'
 
 export function CustomerDetailPage() {
@@ -99,6 +100,8 @@ export function CustomerDetailPage() {
           onChange={(v) => setCustomerFlags(customer, { reminderEnabled: v })}
         />
       </Card>
+
+      <PrescriptionSection customer={customer} />
 
       <CustomerLedger customer={customer} />
 

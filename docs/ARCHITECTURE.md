@@ -204,8 +204,15 @@ updatedAt                           // serverTimestamp = "local updated date", d
 
 **`refCatalog/medex`** + **`refCatalog/medex/chunks/{version}-{n}`** — the MedEx reference list (26,506 brands; prices for the brands in the price file), packed into ~4 documents: a dictionary chunk (forms, generics, companies) and row chunks of < 700 KB (`[id, brand, formIdx, strength, genericIdx, companyIdx, slug, herbal]`, plus `unitPaisa, packPaisa, packText, priceText` on priced rows only). The meta doc holds `version` (file SHA-256 prefix; after a price import, a hash of the previous version + the price file), file name/date, counts, `importedAt/By`, `permissionConfirmed`, `priceFile {fileName, fileSha256, rows, importedAt}`, `pricedCount`. A new brand list keeps the prices already on the list (by MedEx id). Uploaded in one batch (atomic); old-version chunks are deleted in the same batch. Never one document per row (free-tier quota).
 
+**`prescriptions/{autoId}`** (Phase 13) — one prescription photo on a customer: `customerId` (mobile), `takenAt`, `note` (≤ 200), `thumb` (Firestore `bytes`, small JPEG ≈ 240 px for the gallery), `width`, `height`, `imageBytes`, `createdAt/By`, `deviceId`, `schemaVersion`. Listed per customer (`customerId ==`, `createdAt desc`; composite index). Moves with the customer on change-mobile (`customerId`-only update).
+**`prescriptionImages/{same id}`** — the photo itself: `image` (`bytes`, JPEG shrunk in the browser to ≤ ~1400 px and < 700 KB so it fits one document), `createdAt/By`, `schemaVersion`. Kept apart so the gallery never downloads full photos. Create + delete only.
+**`stats/usage`** — `prescriptionCount`, `prescriptionBytes`, changed only by `increment()` in the same batch as an add/delete, so Settings can show how much of the free 1 GiB the photos use with one read.
+Why Firestore and not Cloud Storage: since late 2024 a new Cloud Storage bucket needs the paid Blaze plan; the shop stays on Spark (no card). Firestore's free 1 GiB holds a few thousand shrunk photos next to the records; the counter makes the limit visible. If it ever fills up, moving photos to Storage (Blaze) is a contained change (these two collections only).
+
+**`members/{uid}`** (Phase 14) — staff accounts: `role: 'staff'`, `name`, `active`, `createdAt/By`. The owner stays hard-coded in the rules; staff are recognised by an active `members` doc (`get()` in rules). See §10 Phase 14.
+
 **Reserved for later (names fixed now, not built):**
-`members/{uid}` (role: owner/staff) · `portalLinks/{tokenSha256}` (customer portal) · `stockBatches/{id}`, `stockMovements/{id}` (stock).
+`portalLinks/{tokenSha256}` (customer portal) · `stockBatches/{id}`, `stockMovements/{id}` (stock).
 
 **Removed from the old plan:** `medicineOverrides`, `customMedicines` → merged into `medicines` (shop overrides + `sourceName: 'manual'`).
 
@@ -378,6 +385,12 @@ All in `web/src/domain/`, pure functions, unit-tested (including property tests:
 - Hosting sites: `medibooks` (main link https://medibooks.web.app) and the project's own `baki-khata-d7304`; `HOSTING_SITES` in `web/.env.deploy.local` lists them (main first) and the deploy script publishes the same build to each, so devices installed on the old link keep getting updates. Email/password sign-in works from both origins (no authorized-domain check for it).
 - The Worker (SMS) is not deployed until Phase 7. Owner steps (Firebase project, Firestore in asia-south1, Email/Password, owner user, web app, `firebase login`) are in `docs/RUNBOOK.md` §1; checklist status in `docs/QA.md`.
 
+**Implementation notes (Phase 13 — prescription photos):**
+- `lib/imageShrink.ts`: `createImageBitmap` (browser applies EXIF rotation) → canvas → JPEG, long side 1400 px at quality 0.72, stepping quality down to 0.5 and then the size down to 800 px until it is ≤ 700 KB; thumbnail 240 px. A 3000×4000 test photo became 1050×1400 / 82 KB + a 3.7 KB thumbnail.
+- `data/repos/prescriptions.ts`: one batch = metadata + photo + `stats/usage` increments + audit (fire-and-forget, works offline); delete reverses the counters. The customer page listens to its own photos (thumbnails only); the full photo is a `getDoc` (cache first, so photos taken on this device open offline). Change-mobile moves photo metadata with the transactions.
+- Rules: owner-only; thumb ≤ 60 KB, photo ≤ 900 KB, note ≤ 200; metadata may change only its note or `customerId`; a photo may only be re-written unchanged (so a resumed restore need not read photos back); `stats` never deleted. Composite index `prescriptions (customerId, createdAt desc)`.
+- Backup: photos as `{"$bytes": base64}`, read 20 per page; the owner can leave photos (+ the counter) out; older backup files without these collections still open. Restore writes photos (≤ 6 MB per batch) before their metadata, then the counter. Verified on the emulator: backup with a photo → wipe → restore → backup again gave identical documents, photo bytes included.
+
 ## 8. SMS integration strategy
 
 - **Only the Worker sends SMS** (API key never in the browser).
@@ -418,7 +431,9 @@ All in `web/src/domain/`, pure functions, unit-tested (including property tests:
 | 10 | PNG memo / statement / share | |
 | 11 | PIN lock, backup/restore, settings | |
 | 12 | QA + deploy + Banglish runbook | |
-| later | Customer portal · staff accounts (`members`, custom claims) · stock (`stockBatches`, `stockMovements`; sale lines already carry `medicineId` + `piecesPerUnit × qty`) | |
+| 13 | Prescription photos | Customer page: take a photo (camera) or pick one, shrunk in the browser, stored in Firestore (`prescriptions` + `prescriptionImages`), gallery + full view + share, delete (owner), works offline, moves on change-mobile, included in backup/restore, usage counter in Settings |
+| 14 | Staff accounts | Owner adds/disables staff (email + password, created from the app with a second Firebase app instance so the owner stays signed in). Staff can: find/add customers, New Invoice, take payment, add/view prescriptions, add a medicine. Staff cannot: void, edit/import medicines or prices, settings, backup/restore, balance repair, change mobile, delete photos. Staff see **only their own** transactions (rules: `createdBy == uid`), so their ledger rows and report are individual; the home market total and other staff's work stay hidden. Owner's report can filter by staff. |
+| later | Customer portal · stock (`stockBatches`, `stockMovements`; sale lines already carry `medicineId` + `piecesPerUnit × qty`) | |
 
 Each phase: plan → implement → tests + build → owner checks → next phase.
 

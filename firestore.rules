@@ -100,7 +100,42 @@ service cloud.firestore {
         allow update, delete: if false;
       }
 
-      // members, portalLinks, stock*: reserved, closed until their phase.
+      // Prescription photos (Phase 13). Not financial records, so the owner may delete a wrong photo.
+      // Metadata + a small thumbnail here; the photo itself in prescriptionImages (same id).
+      match /prescriptions/{prescriptionId} {
+        function validMobile(m) {
+          return m is string && m.matches('^01[3-9][0-9]{8}$');
+        }
+        function validPrescription() {
+          let d = request.resource.data;
+          return validMobile(d.customerId)
+            && d.thumb is bytes && d.thumb.size() <= 60000
+            && d.note is string && d.note.size() <= 200;
+        }
+        allow read: if isOwner();
+        allow create: if isOwner() && validPrescription();
+        // Edit the note, or move to the customer's new mobile number (change-mobile) — nothing else.
+        allow update: if isOwner() && (
+          (onlyChanges(['note']) && request.resource.data.note is string && request.resource.data.note.size() <= 200)
+          || (onlyChanges(['customerId']) && validMobile(request.resource.data.customerId))
+        );
+        allow delete: if isOwner();
+      }
+
+      match /prescriptionImages/{imageId} {
+        allow read, delete: if isOwner();
+        allow create: if isOwner() && request.resource.data.image is bytes && request.resource.data.image.size() <= 900000;
+        // Only an identical re-write (a resumed restore); the photo itself never changes.
+        allow update: if isOwner() && request.resource.data.diff(resource.data).affectedKeys().size() == 0;
+      }
+
+      // Counters kept with increment() (e.g. how much space the photos use).
+      match /stats/{statId} {
+        allow read, create, update: if isOwner();
+        allow delete: if false;
+      }
+
+      // members (Phase 14), portalLinks, stock*: reserved, closed until their phase.
     }
   }
 }

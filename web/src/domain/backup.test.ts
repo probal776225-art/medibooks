@@ -52,6 +52,15 @@ describe('backup encoding', () => {
     expect(decodeValue(json, (s, ns) => new FakeTs(s, ns))).toEqual(data)
   })
 
+  it('round-trips bytes as base64', () => {
+    const toB64 = (v: unknown) => (v instanceof Uint8Array ? btoa(String.fromCharCode(...v)) : null)
+    const data = { image: new Uint8Array([255, 216, 255, 0, 7]), note: 'x' }
+    const json = JSON.parse(JSON.stringify(encodeValue(data, isTs, toB64))) as unknown
+    expect(json).toEqual({ image: { $bytes: '/9j/AAc=' }, note: 'x' })
+    const back = decodeValue(json, (s, ns) => new FakeTs(s, ns), (b) => Uint8Array.from(atob(b), (c) => c.charCodeAt(0)))
+    expect(back).toEqual(data)
+  })
+
   it('leaves look-alike maps alone', () => {
     const v = { $ts: [1, 2], other: 1 }
     expect(decodeValue(v, (s, ns) => new FakeTs(s, ns))).toEqual(v)
@@ -66,6 +75,13 @@ describe('parseBackup', () => {
     expect(parseBackup('{"app":"other"}', 'main')).toEqual({ problem: 'notBackup' })
     expect(parseBackup(good.replace('"format":1', '"format":9'), 'main')).toEqual({ problem: 'newerFormat' })
     expect(parseBackup(good, 'shop2')).toEqual({ problem: 'otherShop' })
+    // A file from before the photo collections existed still opens (they count as empty).
+    const old = backupWith({}) as unknown as { collections: Record<string, unknown> }
+    delete old.collections.prescriptions
+    delete old.collections.prescriptionImages
+    delete old.collections.stats
+    const parsed = parseBackup(JSON.stringify(old), 'main')
+    expect('backup' in parsed && parsed.backup.collections.prescriptions).toEqual([])
     const broken = { ...backupWith({}), collections: { customers: [{ id: '', data: {} }] } }
     expect(parseBackup(JSON.stringify(broken), 'main')).toEqual({ problem: 'broken' })
   })

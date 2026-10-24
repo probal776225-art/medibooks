@@ -16,6 +16,7 @@ import { useUiStore } from '../../stores/ui'
 import { BackupCard } from './BackupCard'
 import { BalanceCheckCard } from './BalanceCheckCard'
 import { SecurityCard } from './SecurityCard'
+import { UsageCard } from './UsageCard'
 
 type Shop = ShopSettings['shop']
 
@@ -200,6 +201,7 @@ export function SettingsPage() {
 
       <SecurityCard />
       <BackupCard />
+      <UsageCard />
       <MedicinesCard />
       <BalanceCheckCard />
 

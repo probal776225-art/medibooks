@@ -1,6 +1,6 @@
 // Settings → ব্যাকআপ: download every shop document as JSON (+ a customers CSV for Excel), and restore a
 // JSON backup into an empty shop. Both need internet (they must see the server, not this device's cache).
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { syncMedicines } from '../../catalog/store'
 import { Button, Card, Field, Modal, TextInput } from '../../components/ui'
 import { checkRestoreTarget, exportBackup, recordBackupExported, restoreBackup, RestoreError, type RestoreTarget } from '../../data/backup'
@@ -10,6 +10,8 @@ import { customersCsv, parseBackup, summarizeBackup, type BackupFile, type Backu
 import { useT, type MessageKey } from '../../i18n'
 import { useFormat } from '../../i18n/format'
 import { downloadText } from '../../lib/files'
+import { fetchPhotoUsage, type PhotoUsage } from '../../data/repos/prescriptions'
+import { formatBytes } from '../../domain/prescriptions'
 import { useDataStore } from '../../stores/data'
 import { useOnline } from '../../stores/sync'
 import { inDhaka } from '../../domain/dates'
@@ -92,6 +94,7 @@ function RestoreDialog({ onClose }: { onClose: () => void }) {
                 transactions: summary.counts.transactions,
                 medicines: summary.counts.medicines,
               })}
+              {summary.counts.prescriptions > 0 && ` · ${t('rx.count', { count: summary.counts.prescriptions })}`}
             </p>
             <p>
               {t('backup.fileMarket')}: <span className="font-semibold">{f.money(summary.marketDuePaisa)}</span>
@@ -151,6 +154,13 @@ export function BackupCard() {
   const [busy, setBusy] = useState<string | null>(null)
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
   const [restoring, setRestoring] = useState(false)
+  const [photos, setPhotos] = useState(true)
+  const [usage, setUsage] = useState<PhotoUsage | null>(null)
+  useEffect(() => {
+    fetchPhotoUsage()
+      .then(setUsage)
+      .catch(() => setUsage(null))
+  }, [])
 
   async function exportNow() {
     setMessage(null)
@@ -162,7 +172,7 @@ export function BackupCard() {
         done[name] = count
         readSoFar = Object.values(done).reduce((a, b) => a + b, 0)
         setBusy(t('backup.reading', { count: readSoFar }))
-      })
+      }, { photos })
       const day = inDhaka(backup.exportedAt).format('YYYY-MM-DD')
       downloadText(`medibooks-backup-${day}.json`, JSON.stringify(backup))
       downloadText(`medibooks-customers-${day}.csv`, customersCsv(customers, (ms) => inDhaka(ms).format('YYYY-MM-DD')))
@@ -187,6 +197,22 @@ export function BackupCard() {
       <p className="mt-1 text-slate-600">
         {lastExportAt ? t('backup.last', { date: f.dateTime(lastExportAt) }) : t('backup.never')}
       </p>
+      {usage && usage.count > 0 && (
+        <label className="mt-3 flex items-start gap-3 rounded-lg border border-slate-200 p-3">
+          <input
+            type="checkbox"
+            checked={photos}
+            onChange={(e) => setPhotos(e.target.checked)}
+            className="mt-1 size-5 shrink-0 accent-teal-700"
+          />
+          <span>
+            {t('backup.withPhotos', { count: usage.count })}
+            <span className="block text-sm text-slate-500">
+              {t('backup.photosSize', { size: formatBytes(Math.round((usage.bytes * 4) / 3)) })}
+            </span>
+          </span>
+        </label>
+      )}
       <Button className="mt-3 w-full" disabled={!online || busy !== null} onClick={() => void exportNow()}>
         {busy ?? t('backup.export')}
       </Button>

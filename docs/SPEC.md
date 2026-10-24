@@ -165,6 +165,19 @@ Full design: `docs/ARCHITECTURE.md` §0, §5, §6. Kaggle is **not** used.
 - **MedEx reference list** (Settings → ইমপোর্ট → MedEx ওষুধের তালিকা; owner confirmed MedEx's written permission): choose the `.xlsx` → preview (count, herbal count, skipped rows, 5 samples) → tick "আমার কাছে MedEx-এর লিখিত অনুমতি আছে" → upload. Other devices download it on their next sync. Searches (ওষুধ list, and the sale screen in Phase 4) show a **MedEx তালিকা থেকে** section under the shop's own matches; tapping one opens the add form prefilled (name, strength, form, generic, company, MedEx link) and the owner enters price/pack. Re-uploading the same file does nothing.
 - **MedEx price file** (Settings → ইমপোর্ট → MedEx দামের ফাইল (CSV); columns `Brand Name, Dosage Form, Strength, Generic Name, Company, Unit Price (৳), Pack Info, All Prices, MedEx URL`): choose the `.csv` → preview (rows, with/without price, a warning when the file covers only part of the list, how many list brands get a price, which shop medicines' MedEx price changes before → after, samples) → tick the permission box → import. Prices are shown in **MedEx তালিকা থেকে** results; adding one fills pack + sizes and stores the MedEx price as the source price (the owner may still type their own). Shop medicines that are the same brand (same MedEx id, else the only one with the same name + strength + form) get their source prices, pack and link updated with price history; the owner's own prices and old bills never change. Tablets: per-piece price + box; liquids, tubes, vials: the first listed size is the piece (one bottle = one piece); ampoules/sachets with a box price keep both.
 
+## 15. Prescription photos (Phase 13)
+- Customer page → **প্রেসক্রিপশন** section: **ছবি তুলুন** (phone camera) · **গ্যালারি থেকে** (or a file on PC), optional note.
+- The photo is shrunk on the device (long side ≤ ~1400 px, JPEG, < 700 KB) before saving; works offline and syncs later like everything else.
+- Gallery of thumbnails, newest first, with date and note. Tap → full photo: zoom with the fingers / browser, **শেয়ার করুন** / **ছবি সেভ করুন**, **মুছুন** (owner only, with confirm; audit-logged).
+- Settings shows how many photos are stored and how much of the free space they use.
+- Photos are part of the JSON backup and restore; when the customer's mobile number changes, the photos move too.
+
+## 16. Staff accounts (Phase 14)
+- Settings → **স্টাফ**: add a staff member (name, email, password), turn a staff member off/on.
+- Staff sign in on their own phone/PC (with their own PIN). They can find/add customers, make a New Invoice (নতুন বাকি), take a payment, add/view prescription photos and add a medicine from the MedEx list.
+- Staff cannot void, change prices/imports/settings, back up/restore, repair balances, change a mobile number or delete photos.
+- Staff see only **their own** transactions and an individual report (their invoices, collections by method); no market total or other people's work. The owner's reports can be filtered by staff member.
+
 ## 14. Acceptance checklist (manual, before pilot)
 - [ ] Airplane mode: add customer, add baki (items + amount), take payment, void — all work; data visible instantly
 - [ ] Back online: pending count goes to 0, data appears on the other device, queued SMS go out once (no duplicates)
