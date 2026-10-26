@@ -10,6 +10,11 @@ export default defineConfig(({ mode }) => {
     if (env.VITE_USE_EMULATOR !== 'false' || !env.VITE_FIREBASE_PROJECT_ID || env.VITE_FIREBASE_PROJECT_ID.startsWith('demo-')) {
       throw new Error('Deploy build needs the real Firebase config with VITE_USE_EMULATOR=false (web/.env.deploy.local).')
     }
+    // .env.local is read in every mode, so its local Worker address would leak in unless .env.deploy.local overrides it
+    // (empty = no SMS server yet).
+    if (env.VITE_WORKER_URL && !env.VITE_WORKER_URL.startsWith('https://')) {
+      throw new Error('VITE_WORKER_URL must be the deployed https Worker, or empty, in web/.env.deploy.local.')
+    }
   }
   return {
     // The start-up chunk is mostly the Firebase SDK (Firestore with its offline cache); rarely used screens are split off.
