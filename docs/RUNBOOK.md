@@ -89,6 +89,9 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 - **Bhul lenden:** customer page → লেনদেনের হিসাব → lenden e tap → **এই লেনদেন বাতিল করুন** → karon likhun. Lenden muchhe na; "বাতিল" hoye thake, baki thik hoye jay.
 - **Baki hisab mile na mone hole:** সেটিংস → **ব্যালেন্স যাচাই → যাচাই করুন** (internet lagbe). Gormil thakle dekhabe, thik korar option dibe.
 - **Customer er mobile number bodle geche:** customer page → **মোবাইল নম্বর বদলান** (internet lagbe). Purono hisab notun number e chole jay.
+- **Customer muchte chan:** customer page → nicher dike **কাস্টমার মুছুন** (shudhu owner).
+  - Kono lenden nei (bhul kore add hoyeche): **হ্যাঁ, পুরোপুরি মুছে ফেলুন** → customer ar tar prescription er chhobi muche jay (internet lagbe, fire ashe na).
+  - Lenden ache: hisab thik rakhte puropuri muche na. **লুকিয়ে রাখুন (আর্কাইভ)** chaple list theke sore jay; baki thakle "বাজারে মোট বাকি" te ar gona hoy na. Fire ante: কাস্টমার → **আর্কাইভ** filter → customer → **আর্কাইভ থেকে ফেরান**.
 
 ---
 

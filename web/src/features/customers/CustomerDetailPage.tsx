@@ -13,6 +13,7 @@ import { ChangeMobileDialog } from './ChangeMobileDialog'
 import { CustomerForm } from './CustomerForm'
 import { CustomerLedger } from './CustomerLedger'
 import { CustomerSummary } from './CustomerSummary'
+import { DeleteCustomerDialog } from './DeleteCustomerDialog'
 import { PrescriptionSection } from '../prescriptions/PrescriptionSection'
 import { StatementDialog } from '../print/StatementDialog'
 
@@ -26,6 +27,7 @@ export function CustomerDetailPage() {
   const [editing, setEditing] = useState(false)
   const [changingMobile, setChangingMobile] = useState(false)
   const [showStatement, setShowStatement] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const isOwner = useIsOwner()
 
   if (!customer) {
@@ -116,7 +118,7 @@ export function CustomerDetailPage() {
       <CustomerLedger customer={customer} />
 
       {isOwner && !customer.movedTo && (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-3">
           <Button variant="ghost" className="border border-slate-200" onClick={() => setChangingMobile(true)}>
             {t('mob.change')}
           </Button>
@@ -127,8 +129,12 @@ export function CustomerDetailPage() {
           >
             {customer.archived ? t('customer.unarchive') : t('customer.archive')}
           </Button>
+          <Button variant="danger" onClick={() => setDeleting(true)}>
+            {t('customer.delete')}
+          </Button>
         </div>
       )}
+      {deleting && <DeleteCustomerDialog customer={customer} onClose={() => setDeleting(false)} />}
       {changingMobile && <ChangeMobileDialog customer={customer} onClose={() => setChangingMobile(false)} />}
       {showStatement && <StatementDialog customer={customer} onClose={() => setShowStatement(false)} />}
     </section>

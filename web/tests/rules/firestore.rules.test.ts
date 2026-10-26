@@ -94,9 +94,14 @@ describe('customers', () => {
     await assertSucceeds(setDoc(ref, { ...profile, name: 'Rahim Uddin', totalDuePaisa: increment(0) }, { merge: true }))
   })
 
-  it('cannot be deleted and mobile cannot change in place', async () => {
-    await seed(`${SHOP}/customers/${MOBILE}`, customer())
+  it('only a customer without any history can be deleted; mobile cannot change in place', async () => {
+    await seed(`${SHOP}/customers/${MOBILE}`, { ...customer(), lastTxnAt: 1 })
     await assertFails(deleteDoc(doc(owner(), `${SHOP}/customers/${MOBILE}`)))
+    await seed(`${SHOP}/customers/01811111111`, { ...customer('01811111111'), totalDuePaisa: 500 })
+    await assertFails(deleteDoc(doc(owner(), `${SHOP}/customers/01811111111`)))
+    await seed(`${SHOP}/customers/01911111111`, customer('01911111111'))
+    await assertFails(deleteDoc(doc(stranger(), `${SHOP}/customers/01911111111`)))
+    await assertSucceeds(deleteDoc(doc(owner(), `${SHOP}/customers/01911111111`)))
     await assertFails(updateDoc(doc(owner(), `${SHOP}/customers/${MOBILE}`), { mobile: '01811111111' }))
     await assertFails(updateDoc(doc(owner(), `${SHOP}/customers/${MOBILE}`), { totalDuePaisa: 12.5 }))
   })
@@ -280,6 +285,8 @@ describe('staff (Phase 14)', () => {
     await assertFails(setDoc(doc(db, `${SHOP}/medicines/m2`), { brandName: 'X', shopUnitPricePaisa: 100, shopStripPricePaisa: null, shopPackPricePaisa: null }))
     await assertSucceeds(setDoc(doc(db, `${SHOP}/medicines/m3`), { brandName: 'X', shopUnitPricePaisa: null, shopStripPricePaisa: null, shopPackPricePaisa: null }))
     await assertFails(setDoc(doc(db, `${SHOP}/members/staff-3`), { role: 'staff', name: 'New', active: true }))
+    await seed(`${SHOP}/customers/01911111111`, customer('01911111111'))
+    await assertFails(deleteDoc(doc(db, `${SHOP}/customers/01911111111`)))
     await assertFails(updateDoc(doc(db, `${SHOP}/members/${STAFF}`), { active: true, name: 'Rana!' }))
     await assertSucceeds(setDoc(doc(db, `${SHOP}/auditLog/a2`), { action: 'x', by: STAFF }))
     await assertFails(setDoc(doc(db, `${SHOP}/auditLog/a3`), { action: 'x', by: OWNER }))

@@ -69,7 +69,9 @@ service cloud.firestore {
         allow update: if (isOwner() && validCustomer() && unchanged(['mobile']))
           // Staff: only what a sale or payment changes (due via increment, last activity).
           || (isStaff() && validCustomer() && onlyChanges(['totalDuePaisa', 'lastTxnAt', 'lastPaymentAt', 'updatedAt']));
-        allow delete: if false;
+        // Only a customer who never had a transaction and owes nothing (e.g. added by mistake); anyone with
+        // history is archived instead, because transactions are never deleted.
+        allow delete: if isOwner() && resource.data.totalDuePaisa == 0 && resource.data.get('lastTxnAt', null) == null;
       }
 
       // Append-only. Amounts never change. Allowed edits: a one-time void, or moving the transaction to the

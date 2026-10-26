@@ -1,6 +1,8 @@
 import {
+  Bytes,
   getDocsFromServer,
   increment,
+  limit,
   onSnapshot,
   query,
   serverTimestamp,
@@ -173,4 +175,50 @@ export async function changeCustomerMobile(
   )
   await batch.commit()
   return newMobile
+}
+
+/** A customer who never had a transaction and owes nothing can be deleted for good. */
+export const canDeleteCustomer = (c: Customer) => c.lastTxnAt === null && c.totalDuePaisa === 0
+
+/**
+ * Delete a customer added by mistake, with their prescription photos. Online only and awaited: it first checks
+ * the server for any transaction (the rules allow it only with no history and no due). Anyone with history is
+ * archived instead — transactions are never deleted.
+ */
+export async function deleteCustomer(c: Customer): Promise<void> {
+  if (!canDeleteCustomer(c)) throw new DomainError('CUSTOMER_HAS_HISTORY')
+  const [txns, photos] = await Promise.all([
+    getDocsFromServer(query(paths.transactions(), where('customerId', '==', c.mobile), limit(1))),
+    getDocsFromServer(query(paths.prescriptions(), where('customerId', '==', c.mobile))),
+  ])
+  if (!txns.empty) throw new DomainError('CUSTOMER_HAS_HISTORY')
+  const ctx = writeContext()
+  const batch = newBatch()
+  batch.delete(paths.customer(c.mobile))
+  let bytes = 0
+  for (const d of photos.docs) {
+    batch.delete(d.ref)
+    batch.delete(paths.prescriptionImage(d.id))
+    const data = d.data()
+    bytes += Number(data.imageBytes ?? 0) + (data.thumb instanceof Bytes ? data.thumb.toUint8Array().length : 0)
+  }
+  if (photos.size) {
+    batch.set(
+      paths.usageStats(),
+      { prescriptionCount: increment(-photos.size), prescriptionBytes: increment(-bytes), updatedAt: serverTimestamp() },
+      { merge: true },
+    )
+  }
+  auditInBatch(
+    batch,
+    {
+      action: 'customer.delete',
+      entity: 'customer',
+      entityId: c.mobile,
+      before: { name: c.name, address: c.address, note: c.note, photos: photos.size },
+      after: null,
+    },
+    ctx,
+  )
+  await batch.commit()
 }
