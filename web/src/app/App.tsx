@@ -1,7 +1,7 @@
 import { lazy, useEffect, useRef, type ReactNode } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { startCatalog, stopCatalog } from '../catalog/store'
-import { PlaceholderPage } from '../components/PlaceholderPage'
+import { startSmsOutbox } from '../data/repos/sms'
 import { Toaster } from '../components/ui'
 import { LoginPage } from '../features/auth/LoginPage'
 import { NoAccess } from '../features/auth/NoAccess'
@@ -21,7 +21,7 @@ import { startSessionData, stopSessionData } from '../stores/data'
 import { startIdleWatch, unlockAfterLogin, useLockStore } from '../stores/lock'
 import { startRole, stopRole, useIsOwner, useRoleStore } from '../stores/role'
 import { Layout } from './Layout'
-import { NAV, ROUTES } from './routes'
+import { ROUTES } from './routes'
 
 // Screens used now and then load on demand (still precached by the service worker, so they open offline).
 const ImportsPage = lazy(() => import('../features/imports/ImportsPage').then((m) => ({ default: m.ImportsPage })))
@@ -29,10 +29,9 @@ const MedicineImportPage = lazy(() => import('../features/imports/MedicineImport
 const OpeningImportPage = lazy(() => import('../features/imports/OpeningImportPage').then((m) => ({ default: m.OpeningImportPage })))
 const ReportsPage = lazy(() => import('../features/reports/ReportsPage').then((m) => ({ default: m.ReportsPage })))
 const SettingsPage = lazy(() => import('../features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+const SmsLogPage = lazy(() => import('../features/sms/SmsLogPage').then((m) => ({ default: m.SmsLogPage })))
+const RemindersPage = lazy(() => import('../features/reminders/RemindersPage').then((m) => ({ default: m.RemindersPage })))
 
-const placeholderRoutes = (['reminders', 'smsLog'] as const).map(
-  (id) => ({ path: ROUTES[id], element: <PlaceholderPage item={NAV[id]} /> }),
-)
 
 /** The owner's tools: staff who open the link land on Home. */
 function OwnerOnly({ children }: { children: ReactNode }) {
@@ -58,7 +57,8 @@ const router = createBrowserRouter([
       { path: ROUTES.importMedicines, element: <OwnerOnly><MedicineImportPage /></OwnerOnly> },
       { path: ROUTES.settings, element: <SettingsPage /> },
       { path: ROUTES.more, element: <MorePage /> },
-      ...placeholderRoutes,
+      { path: ROUTES.reminders, element: <OwnerOnly><RemindersPage /></OwnerOnly> },
+      { path: ROUTES.smsLog, element: <OwnerOnly><SmsLogPage /></OwnerOnly> },
       { path: '*', element: <Navigate to={ROUTES.home} replace /> },
     ],
   },
@@ -105,6 +105,8 @@ export function App() {
       stopCatalog()
     }
   }, [allowed])
+  // SMS this device queued while offline (or before a reload) go to the Worker once they reach the server.
+  useEffect(() => (allowed ? startSmsOutbox() : undefined), [allowed])
 
   if (status === 'loading') return <Splash />
   if (status === 'signedOut') return <LoginPage />

@@ -5,24 +5,11 @@
 // firestore.rules in the repo keeps the emulator's placeholder UID; the owner's real UID is put in a
 // generated copy (.deploy/firestore.rules) only for the deploy.
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { ENV_FILE, fail, hostingSites, readDeployEnv } from './deploy-env.mjs'
 
 const PLACEHOLDER = 'REPLACE_WITH_OWNER_UID'
-const ENV_FILE = 'web/.env.deploy.local'
-
-function fail(message) {
-  console.error(`\n✗ ${message}\n`)
-  process.exit(1)
-}
-
-if (!existsSync(ENV_FILE)) fail(`${ENV_FILE} is missing. Copy the "deploy" part of web/.env.example into it and fill it in.`)
-const env = Object.fromEntries(
-  readFileSync(ENV_FILE, 'utf8')
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((l) => l && !l.startsWith('#') && l.includes('='))
-    .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()]),
-)
+const env = readDeployEnv()
 
 const projectId = env.VITE_FIREBASE_PROJECT_ID ?? ''
 for (const key of ['VITE_FIREBASE_API_KEY', 'VITE_FIREBASE_AUTH_DOMAIN', 'VITE_FIREBASE_PROJECT_ID', 'VITE_FIREBASE_APP_ID', 'OWNER_UID']) {
@@ -44,8 +31,7 @@ writeFileSync('.deploy/firestore.rules', rules.replace(PLACEHOLDER, env.OWNER_UI
 const config = JSON.parse(readFileSync('firebase.json', 'utf8'))
 config.firestore.rules = '.deploy/firestore.rules'
 config.hosting.public = 'web/dist-deploy'
-// HOSTING_SITES: every Hosting site that serves the app, main link first (default: the project's own site).
-const sites = (env.HOSTING_SITES || projectId).split(',').map((x) => x.trim()).filter(Boolean)
+const sites = hostingSites(env)
 config.hosting = sites.map((site) => ({ site, ...config.hosting }))
 delete config.emulators
 writeFileSync('firebase.deploy.json', `${JSON.stringify(config, null, 2)}\n`)

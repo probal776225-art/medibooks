@@ -4,6 +4,7 @@ import { ROUTES } from '../../app/routes'
 import { Icon } from '../../components/Icon'
 import { Button, buttonClass, Card, Toggle } from '../../components/ui'
 import { setCustomerFlags } from '../../data/repos/customers'
+import { smsServerConfigured } from '../../data/repos/sms'
 import { useT } from '../../i18n'
 import { useFormat } from '../../i18n/format'
 import { useDataStore } from '../../stores/data'
@@ -16,6 +17,7 @@ import { CustomerSummary } from './CustomerSummary'
 import { DeleteCustomerDialog } from './DeleteCustomerDialog'
 import { PrescriptionSection } from '../prescriptions/PrescriptionSection'
 import { StatementDialog } from '../print/StatementDialog'
+import { RemindDialog } from '../reminders/RemindDialog'
 
 export function CustomerDetailPage() {
   const t = useT()
@@ -28,7 +30,9 @@ export function CustomerDetailPage() {
   const [changingMobile, setChangingMobile] = useState(false)
   const [showStatement, setShowStatement] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [reminding, setReminding] = useState(false)
   const isOwner = useIsOwner()
+  const smsOn = useDataStore((s) => s.settings.sms.enabled)
 
   if (!customer) {
     return (
@@ -92,7 +96,12 @@ export function CustomerDetailPage() {
           </Button>
         )}
         {isOwner && (
-          <Button variant="ghost" disabled className="border border-slate-200">
+          <Button
+            variant="ghost"
+            disabled={!smsServerConfigured || !smsOn || !customer.smsEnabled || customer.totalDuePaisa <= 0}
+            className="border border-slate-200"
+            onClick={() => setReminding(true)}
+          >
             {t('customer.remindNow')}
           </Button>
         )}
@@ -135,6 +144,7 @@ export function CustomerDetailPage() {
         </div>
       )}
       {deleting && <DeleteCustomerDialog customer={customer} onClose={() => setDeleting(false)} />}
+      {reminding && <RemindDialog customers={[customer]} onClose={() => setReminding(false)} />}
       {changingMobile && <ChangeMobileDialog customer={customer} onClose={() => setChangingMobile(false)} />}
       {showStatement && <StatementDialog customer={customer} onClose={() => setShowStatement(false)} />}
     </section>

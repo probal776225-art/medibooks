@@ -16,7 +16,9 @@ import { useUiStore } from '../../stores/ui'
 import { BackupCard } from './BackupCard'
 import { BalanceCheckCard } from './BalanceCheckCard'
 import { useIsOwner, useRoleStore } from '../../stores/role'
+import { ReminderCard } from './ReminderCard'
 import { SecurityCard } from './SecurityCard'
+import { SmsCard } from './SmsCard'
 import { StaffCard } from './StaffCard'
 import { UsageCard } from './UsageCard'
 
@@ -230,6 +232,8 @@ export function SettingsPage() {
 
       {display}
 
+      <SmsCard />
+      <ReminderCard />
       <SecurityCard />
       <StaffCard />
       <BackupCard />
@@ -238,8 +242,6 @@ export function SettingsPage() {
       <BalanceCheckCard />
 
       {account}
-
-      <p className="text-sm text-slate-500">{t('settings.more')}</p>
       {editingShop && <ShopInfoDialog shop={settings.shop} onClose={() => setEditingShop(false)} />}
     </section>
   )

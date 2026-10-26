@@ -137,10 +137,28 @@ service cloud.firestore {
         }
       }
 
-      // Phase 7 adds the retry rule; the Worker updates status with its service account.
+      // SMS queue (Phase 7). The app adds an item as 'pending' in the same batch as the bill or payment; only the
+      // Worker (service account) moves it on. The owner may put a failed item back in the queue — nothing else.
       match /smsQueue/{itemId} {
-        allow read, create: if isOwner();
-        allow update, delete: if false;
+        function validSms() {
+          let d = request.resource.data;
+          return d.status == 'pending' && d.attempts == 0
+            && d.to is string && d.to.matches('^01[3-9][0-9]{8}$')
+            && d.text is string && d.text.size() > 0 && d.text.size() <= 640
+            && d.segments is int
+            // A customer's SMS goes to that customer; only the owner's test message has no customer.
+            && ((d.kind == 'test' && d.customerId == null) || (d.kind != 'test' && d.to == d.customerId));
+        }
+        allow read: if isOwner();
+        allow create: if validSms() && (
+          (isOwner() && request.resource.data.kind in ['bakiAdd', 'payment', 'paymentClear', 'reminder', 'opening', 'test'])
+          || (staffWrite('createdBy') && request.resource.data.kind in ['bakiAdd', 'payment', 'paymentClear']));
+        allow update: if isOwner()
+          && resource.data.status == 'failed'
+          && request.resource.data.status == 'pending'
+          && request.resource.data.attempts == 0
+          && onlyChanges(['status', 'attempts', 'lastError', 'retriedAt']);
+        allow delete: if false;
       }
 
       // Prescription photos (Phase 13). Not financial records, so the owner may delete a wrong photo.

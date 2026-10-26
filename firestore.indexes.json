@@ -29,6 +29,20 @@
       ]
     },
     {
+      "collectionGroup": "smsQueue",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "medicinePriceHistory",
       "queryScope": "COLLECTION",
       "fields": [

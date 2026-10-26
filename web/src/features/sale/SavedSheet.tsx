@@ -8,6 +8,7 @@ import { useFormat } from '../../i18n/format'
 import { useOnline } from '../../stores/sync'
 import { MemoImage } from '../print/PrintTemplates'
 import { PngPreviewDialog } from '../print/PngPreviewDialog'
+import { SmsNote } from '../sms/SmsNote'
 
 /** After saving a bill or a payment: what was recorded, and the next step. */
 export function SavedSheet({ txn, onAnother, onClose }: { txn: TransactionDraft; onAnother: () => void; onClose: () => void }) {
@@ -49,7 +50,7 @@ export function SavedSheet({ txn, onAnother, onClose }: { txn: TransactionDraft;
         </div>
       </dl>
       <p className="mt-2 text-sm text-slate-500">
-        {t('sale.smsLater')}
+        <SmsNote txn={txn} />
         {!online && ` · ${t('sale.offlineSaved')}`}
       </p>
       <div className="mt-4 grid gap-2 sm:grid-cols-2">

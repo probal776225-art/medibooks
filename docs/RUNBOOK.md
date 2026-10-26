@@ -6,7 +6,7 @@ App er link: **https://medibooks.web.app** (Firebase project: `baki-khata-d7304`
 
 Purono link `https://baki-khata-d7304.web.app` o eki app dekhay, eki data. Tobe notun phone/PC te **medibooks.web.app** i install korun. Purono link e install kora app thakle: "সিঙ্ক বাকি" 0 hole seta uninstall kore notun link e login + install + PIN korun.
 
-Ei khatay ache: prothombar setup, PC/phone e install, protidiner kaj, internet na thakle ki hoy, bhul thik kora, backup, Firebase er free limit dekha, ar kono somossa hole ki korben.
+Ei khatay ache: prothombar setup, PC/phone e install, protidiner kaj, internet na thakle ki hoy, bhul thik kora, backup, SMS ar তাগাদা, Firebase er free limit dekha, ar kono somossa hole ki korben.
 
 ---
 
@@ -139,10 +139,39 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 
 ---
 
-## 10. SMS
+## 10. SMS ar তাগাদা
 
-- SMS **ekhono chalu na** (Phase 7 — SMS provider thik hole hobe).
-- Chalu hole: SMS na gele age dekhben (1) customer er "SMS পাঠাবে" chalu kina, (2) SMS লগ e ki likha, (3) provider er balance. Ei ongsho tokhon puro kore lekha hobe.
+SMS jay **bulksmsbd.net** diye, ekta chhoto free server er maddhome (**Cloudflare Worker**). API key shudhu oi server e thake — app ba phone e kokhono na.
+
+### Ekbar-i korte hobe (setup)
+
+1. **bulksmsbd panel:** login → **Phone Book → IP White List** → **IP White Listing Setting** → **Disable** → phone e asha OTP din. (Cloudflare er IP bodlay, whitelist chalu thakle SMS jabe na — error `1032`.)
+2. **Cloudflare:** **dash.cloudflare.com/sign-up** e free account khulun (card lagbe na). Email verify korun.
+3. Terminal e (project folder er `worker` folder theke) `npx wrangler login` → browser e **Allow** chapun.
+4. **Firebase er "service account" file:** console.firebase.google.com → project → ⚙️ **Project settings → Service accounts → Generate new private key → Generate key**. Ekta `.json` file Downloads e ashbe. **Eta karo sathe share korben na.**
+5. Claude ke bolun "Worker deploy koro" — Claude `npm run deploy:worker` chalabe (ekta link dibe: `https://medibooks-sms.….workers.dev`).
+6. Terminal e `worker` folder theke duita command (key/file **chat e paste korben na**):
+   - `npx wrangler secret put SMS_API_KEY --name medibooks-sms` → bulksmsbd er API key paste kore Enter.
+   - `npx wrangler secret put SERVICE_ACCOUNT_JSON --name medibooks-sms < ~/Downloads/<oi-file>.json`
+   - Tarpor Downloads theke oi `.json` file ta **muche** din (Trash o khali korun).
+7. Claude app ta abar deploy korbe (Worker er link app e boshe).
+8. App e: সেটিংস → **SMS** → **টেস্ট SMS পাঠান** → nijer number → **পাঠান**. Phone e SMS ashle **টেস্ট মোড** **বন্ধ** korun. Ekhane **প্রতি SMS-এর দাম** (jemon `0.35`) dile khorcher hisab dekhabe.
+
+### Protidin
+
+- **নতুন বাকি** ba **জমা নিন** save korlei customer SMS pay (customer er **SMS পাঠাবে** chalu thakle). Save er por niche lekha thake SMS jacche kina.
+- Internet na thakle SMS phone e jome thake, internet ele nije chole jay (ba server 10 minute por por nije pathay). Ek SMS dui bar jay na.
+- **SMS লগ** (আরও → SMS লগ): sob SMS, **পাঠানো / অপেক্ষায় / যায়নি / টেস্ট**. "যায়নি" hole karon lekha thake, **আবার পাঠান** chapa jay. Upore ei maser SMS songkha ar khoroch.
+- সেটিংস → SMS → **ব্যালেন্স দেখুন**: bulksmsbd te koto taka ache. Balance shesh hole SMS "যায়নি (1007)" hobe — recharge kore SMS লগ e **আবার পাঠান**.
+- **SMS er lekha bodlate:** সেটিংস → SMS → **SMS-এর লেখা** → **এডিট**. Nam/taka/mot baki er bolgula chap diye bosano jay; niche namuna ar koto bhag (khoroch) dekhay. Bangla SMS e 70 okkhor = 1 bhag; beshi hole 67 okkhore 1 bhag.
+
+### তাগাদা (baki r reminder)
+
+- **Nijei jay:** protidin **সকাল ১০টা**-r por (server prothom 10 minute er moddhe), jader baki **৳৫,০০০+**, protiti customer ke **2 din por por**, mashe sorbochcho **15 bar**. Gato **2 diner** moddhe joma dile oi din jay na. Customer er **SMS পাঠাবে** ba **অটো তাগাদা** bondho thakle jay na. Raat 9 tar por kokhono jay na.
+- **Niyom bodlate:** সেটিংস → **তাগাদা (রিমাইন্ডার)** → taka / din / somoy / mashe koto bar → **সেভ করুন**. Puro bondho: **অটো তাগাদা চালু** switch off.
+- **তাগাদা page** (nicher bar e): aaj kake pathano jay tar list (boro baki age) → **এখনই পাঠান** (ekjon), **সবাইকে পাঠান** (koto jon, koto bhag, khoroch dekhiye jiggesh korbe), **কল**. **আজ বাদ** e dekhay ke keno bad (sompratik pathano, sompratik joma, SMS bondho…).
+- Ekjon customer ke: customer page → **এখনই রিমাইন্ডার**.
+- **টেস্ট মোড** chalu thakle tagada o shudhu লগ e "টেস্ট" hoy, customer pay na.
 
 ---
 
@@ -178,3 +207,5 @@ npm run deploy
 ```
 
 Script age check kore: real project (demo na), emulator bondho, owner UID ache. Tarpor app build kore Hosting + security rules + index deploy kore, sheshe link dekhay.
+
+SMS server (Cloudflare Worker) alada deploy hoy: `npm run deploy:worker` (`web/.env.deploy.local` e `SMS_SENDER_ID` lage; API key ar service account shudhu `wrangler secret put` diye, §10). Worker er link `VITE_WORKER_URL` hisebe `web/.env.deploy.local` e boshe, tarpor `npm run deploy`.

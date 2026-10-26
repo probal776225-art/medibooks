@@ -4,6 +4,7 @@ import { customerPath, ROUTES } from '../../app/routes'
 import { Icon } from '../../components/Icon'
 import { subscribeRange } from '../../data/repos/transactions'
 import { marketDue, queryCustomers } from '../../domain/customers'
+import { dueForReminder } from '../../domain/reminders'
 import { presetRange, summarize } from '../../domain/reports'
 import type { Transaction } from '../../domain/types'
 import { useT, type MessageKey } from '../../i18n'
@@ -54,6 +55,8 @@ export function HomePage() {
     [customers, query],
   )
   const total = useMemo(() => marketDue(customers), [customers])
+  const reminderRules = useDataStore((s) => s.settings.reminder)
+  const remindable = useMemo(() => dueForReminder(customers, reminderRules, Date.now()).length, [customers, reminderRules])
   const sum = useMemo(() => (today ? summarize(today) : null), [today])
   const dash = '—'
 
@@ -98,7 +101,11 @@ export function HomePage() {
           sub={sum ? t('home.todayCounts', { sales: sum.saleCount, payments: sum.paymentCount }) : undefined}
         />
         <Stat label={t('home.todayPaid')} value={sum ? f.money(sum.collectedPaisa) : dash} tone="text-emerald-700" />
-        {!isStaff && <Stat label={t('home.todayReminders')} value={dash} sub={t('home.remindersLater')} tone="text-slate-300" />}
+        {!isStaff && (
+          <Link to={ROUTES.reminders} className="block hover:opacity-90">
+            <Stat label={t('home.todayReminders')} value={f.num(remindable)} sub={t('home.remindersSub')} tone="text-amber-700" />
+          </Link>
+        )}
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3">

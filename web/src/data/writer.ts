@@ -29,12 +29,22 @@ export function newBatch(): WriteBatch {
   return writeBatch(db)
 }
 
-/** Fire-and-forget commit; the local cache updates immediately, errors become a toast. */
-export function commitInBackground(batch: WriteBatch): void {
+/**
+ * Fire-and-forget commit; the local cache updates immediately, errors become a toast.
+ * `onCommitted` runs once the server has the batch (at once online, after reconnecting offline).
+ */
+export function commitInBackground(batch: WriteBatch, onCommitted?: () => void): void {
   const sync = useSyncStore.getState()
   sync.beginWrite()
   batch
     .commit()
+    .then(() => {
+      try {
+        onCommitted?.()
+      } catch (e) {
+        console.error('After-commit step failed', e)
+      }
+    })
     .catch((e: unknown) => {
       console.error('Write rejected', e)
       useToastStore.getState().show('error', 'toast.writeFailed')

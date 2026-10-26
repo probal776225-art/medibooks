@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { customerPath } from '../../app/routes'
 import { Button, Card } from '../../components/ui'
+import { fetchSmsStats } from '../../data/repos/sms'
 import { fetchRange } from '../../data/repos/transactions'
 import { formatDate } from '../../domain/dates'
 import {
@@ -63,6 +64,22 @@ export function ReportsPage() {
   const [members, setMembers] = useState<Member[]>([])
   const [who, setWho] = useState<string>('all')
   useEffect(() => (ownerUid ? subscribeMembers(setMembers, () => setMembers([])) : undefined), [ownerUid])
+
+  // Sent SMS in the range (owner): one aggregate query, online only.
+  const [sms, setSms] = useState<{ sent: number; segments: number } | 'offline' | null>(null)
+  const rate = useDataStore((s) => s.settings.sms.ratePaisa)
+  useEffect(() => {
+    if (!ownerUid) return
+    let alive = true
+    setSms(null)
+    fetchSmsStats(range.start, range.end).then(
+      (d) => alive && setSms(d),
+      () => alive && setSms('offline'),
+    )
+    return () => {
+      alive = false
+    }
+  }, [range, ownerUid])
 
   useEffect(() => {
     let alive = true
@@ -229,7 +246,16 @@ export function ReportsPage() {
             ))}
             {sum && <Row label={t('rep.paymentCount', { count: sum.paymentCount })} value="" />}
           </div>
-          <p className="mt-2 text-sm text-slate-500">{t('rep.smsLater')}</p>
+          {!isStaff &&
+            (sms === 'offline' ? (
+              <p className="mt-2 text-sm text-slate-500">{t('rep.smsOffline')}</p>
+            ) : (
+              <Row
+                label={t('rep.sms')}
+                value={sms ? t('rep.smsCount', { count: f.num(sms.sent), parts: f.num(sms.segments) }) : dash}
+                sub={sms && rate > 0 ? t('smslog.cost', { amount: f.money(sms.segments * rate) }) : undefined}
+              />
+            ))}
         </Card>
 
         {!isStaff && (

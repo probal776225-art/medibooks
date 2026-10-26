@@ -1,5 +1,6 @@
 // Firestore document data → domain types (Timestamps → epoch millis, missing fields → defaults).
 import { Timestamp, type DocumentData } from 'firebase/firestore'
+import type { SmsQueueItem, SmsQueueKind, SmsStatus } from '../domain/sms'
 import {
   SCHEMA_VERSION,
   type BillDiscount,
@@ -120,5 +121,28 @@ export function transactionFromDoc(id: string, d: DocumentData): Transaction {
     voidedBy: strOrNull(d.voidedBy),
     voidReason: str(d.voidReason),
     schemaVersion: SCHEMA_VERSION,
+  }
+}
+
+const SMS_STATUSES: readonly SmsStatus[] = ['pending', 'sending', 'sent', 'failed', 'test']
+
+export function smsFromDoc(id: string, d: DocumentData): SmsQueueItem {
+  return {
+    id,
+    kind: str(d.kind, 'test') as SmsQueueKind,
+    customerId: typeof d.customerId === 'string' ? d.customerId : null,
+    customerName: str(d.customerName),
+    to: str(d.to),
+    text: str(d.text),
+    segments: int(d.segments, 1),
+    unicode: bool(d.unicode, true),
+    txnId: typeof d.txnId === 'string' ? d.txnId : null,
+    status: SMS_STATUSES.includes(d.status as SmsStatus) ? (d.status as SmsStatus) : 'pending',
+    attempts: int(d.attempts),
+    lastError: str(d.lastError),
+    providerRef: str(d.providerRef),
+    createdAt: toMillis(d.createdAt) ?? 0,
+    createdBy: str(d.createdBy),
+    sentAt: toMillis(d.sentAt),
   }
 }

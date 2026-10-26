@@ -19,14 +19,17 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore'
 import { buildVoid } from '../../domain/billing'
+import { planTxnSms } from '../../domain/sms'
 import type { BalanceMismatch } from '../../domain/ledger'
 import type { Transaction, TransactionDraft } from '../../domain/types'
 import { transactionFromDoc } from '../convert'
 import { paths } from '../paths'
+import { useDataStore } from '../../stores/data'
 import { staffScopeUid } from '../../stores/role'
 import { auditInBatch, commitInBackground, newBatch, writeContext } from '../writer'
+import { queueSmsInBatch, sendSoon, smsServerConfigured } from './sms'
 
-/** Returns the new transaction id. */
+/** Returns the new transaction id. The customer's SMS (if SMS is on) goes into the same batch. */
 export function saveTransaction(draft: TransactionDraft): string {
   const ref = doc(paths.transactions())
   const batch = newBatch()
@@ -43,8 +46,16 @@ export function saveTransaction(draft: TransactionDraft): string {
     ...(draft.paidNowPaisa > 0 ? { lastPaymentAt: at } : {}),
     updatedAt: serverTimestamp(),
   })
-  // TODO(Phase 7): add the smsQueue item here, in this same batch, when SMS is on for the customer.
-  commitInBackground(batch)
+  const { settings, byMobile } = useDataStore.getState()
+  // No SMS server in this build (the Worker is not set up yet): nothing to queue.
+  const plan = smsServerConfigured ? planTxnSms(draft, byMobile.get(draft.customerId), settings) : null
+  const smsId = plan
+    ? queueSmsInBatch(batch, plan, { customerId: draft.customerId, customerName: draft.customerName, txnId: ref.id }, {
+        uid: draft.createdBy,
+        now: draft.createdAt,
+      })
+    : null
+  commitInBackground(batch, smsId ? () => sendSoon([smsId]) : undefined)
   return ref.id
 }
 

@@ -55,6 +55,10 @@ function sale(effectPaisa = 5000) {
   return { customerId: MOBILE, type: 'sale', effectPaisa, netPaisa: effectPaisa, voided: false, voidReason: '' }
 }
 
+function sms(overrides: Record<string, unknown> = {}) {
+  return { kind: 'bakiAdd', customerId: MOBILE, to: MOBILE, text: 'রহিম, আজ ৳৫০ বাকি যোগ হলো।', segments: 1, status: 'pending', attempts: 0, ...overrides }
+}
+
 async function seed(path: string, data: Record<string, unknown>) {
   await env.withSecurityRulesDisabled(async (ctx) => {
     await setDoc(doc(ctx.firestore(), path), data)
@@ -170,10 +174,21 @@ describe('logs and medicines', () => {
     await assertFails(setDoc(doc(stranger(), `${SHOP}/refCatalog/medex/chunks/x`), { data: '[]' }))
   })
 
-  it('sms queue: owner creates, cannot edit or delete', async () => {
-    await assertSucceeds(setDoc(doc(owner(), `${SHOP}/smsQueue/s1`), { status: 'pending' }))
-    await assertFails(updateDoc(doc(owner(), `${SHOP}/smsQueue/s1`), { status: 'sent' }))
-    await assertFails(deleteDoc(doc(owner(), `${SHOP}/smsQueue/s1`)))
+  it('sms queue: owner adds pending items to the customer; only a failed item can go back to pending', async () => {
+    const q = (id: string) => doc(owner(), `${SHOP}/smsQueue/${id}`)
+    await assertSucceeds(setDoc(q('s1'), sms()))
+    await assertSucceeds(setDoc(q('t1'), sms({ kind: 'test', customerId: null, to: '01811111111' })))
+    await assertFails(setDoc(q('s2'), sms({ status: 'sent' })))
+    await assertFails(setDoc(q('s3'), sms({ to: '01811111111' })))
+    await assertFails(setDoc(q('s4'), sms({ kind: 'test', to: '01811111111' })))
+    await assertFails(setDoc(q('s5'), sms({ text: 'ক'.repeat(641) })))
+    await assertFails(setDoc(q('s6'), sms({ kind: 'promo' })))
+    await assertFails(updateDoc(q('s1'), { status: 'sent' }))
+    await assertFails(deleteDoc(q('s1')))
+    await seed(`${SHOP}/smsQueue/f1`, { ...sms(), status: 'failed', attempts: 3, lastError: 'x' })
+    await assertFails(updateDoc(q('f1'), { status: 'pending', attempts: 0, text: 'other' }))
+    await assertSucceeds(updateDoc(q('f1'), { status: 'pending', attempts: 0, lastError: '' }))
+    await assertFails(getDoc(doc(stranger(), `${SHOP}/smsQueue/s1`)))
   })
 })
 
@@ -261,6 +276,16 @@ describe('staff (Phase 14)', () => {
     bad.update(doc(db, `${SHOP}/customers/${MOBILE}`), { totalDuePaisa: increment(5000) })
     await assertFails(bad.commit())
     await assertSucceeds(setDoc(doc(db, `${SHOP}/customers/01811111111`), customer('01811111111')))
+  })
+
+  it('queues the SMS of their own bill or payment, nothing else, and cannot read the SMS log', async () => {
+    const q = (id: string) => doc(staff(), `${SHOP}/smsQueue/${id}`)
+    await assertSucceeds(setDoc(q('s1'), sms({ createdBy: STAFF })))
+    await assertSucceeds(setDoc(q('s2'), sms({ kind: 'paymentClear', createdBy: STAFF })))
+    await assertFails(setDoc(q('s3'), sms({ createdBy: OWNER })))
+    await assertFails(setDoc(q('s4'), sms({ kind: 'reminder', createdBy: STAFF })))
+    await assertFails(setDoc(q('s5'), sms({ kind: 'test', customerId: null, to: '01811111111', createdBy: STAFF })))
+    await assertFails(getDoc(q('s1')))
   })
 
   it('sees only their own transactions', async () => {

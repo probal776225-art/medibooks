@@ -102,18 +102,19 @@ Default `smsShortName`: `অ্যালোপ্যাথিক স্টোর
 1. App renders the message and writes `smsQueue` (status `pending`) in the same batch as the transaction.
 2. If online, the app calls Worker `POST /sms/process` with the queue id(s) and the Firebase ID token.
 3. Worker claims each item (status `sending` with an `updateTime` precondition), calls the provider, sets `sent`/`failed` + `providerRef`/`lastError`.
-4. Offline: the item syncs later; the app processes its synced pending items when back online; the Worker cron also sweeps `pending` items older than 2 min. Retry `failed` up to 3 attempts.
+4. Offline: the item syncs later; the app processes its synced pending items when back online; the Worker cron also sweeps `pending` items older than 2 min. A temporary provider error puts the item back in the queue for a later try (up to 3 attempts), then `failed`; the owner can retry a failed item from the SMS Log.
 5. **Test mode** (`sms.testMode`, default ON until the provider is ready): Worker does not call the provider, marks status `test`. SMS Log shows "টেস্ট".
 
 **Per-customer** `smsEnabled` off → no queue item for that customer (reminders included).
 **SMS Log page:** list with status, kind, customer, segments, time; filter by status; retry failed; monthly count + estimated cost.
+**Provider:** bulksmsbd.net, non-masking sender id; its IP whitelist must be off (setup steps in `docs/RUNBOOK.md` §10).
 
 ## 9. Reminder (তাগাদা)
 Rules (all editable in Settings → রিমাইন্ডার):
 - `enabled` true; `thresholdPaisa` = ৳5,000; **`intervalDays` = 2** (alternate day; set 1 for daily); `sendHour` = 10 (Dhaka); `maxPerMonth` = 15; `skipIfPaidWithinDays` = 2
 - Eligible = `totalDuePaisa ≥ threshold` AND customer `smsEnabled` AND `reminderEnabled` AND not archived AND `lastReminderAt` older than `intervalDays` (minus 2h tolerance) AND no payment within `skipIfPaidWithinDays` AND monthly count < `maxPerMonth`
 
-**Automatic:** Worker cron (every 10 min) runs the reminder job once per day when Dhaka hour == `sendHour` (guarded by `settings.reminder.lastRunDate`). Creates `smsQueue` items (`kind: reminder`), sends them, updates `lastReminderAt` and the monthly counter.
+**Automatic:** Worker cron (every 10 min) runs the reminder job once per day, the first time it runs at or after `sendHour` and before 9 pm Dhaka (guarded by `settings.reminder.lastRunDate`). Creates `smsQueue` items (`kind: reminder`), sends them, updates `lastReminderAt` and the monthly counter.
 **তাগাদা page (app):** today's eligible list (computed client-side from customers), last reminder date, due, aging; buttons: এখনই পাঠাও (single), সবাইকে পাঠাও (bulk, shows count + cost, confirm), কল.
 
 ## 10. Reports

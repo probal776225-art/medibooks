@@ -27,21 +27,19 @@ export interface NavItem {
   id: RouteId
   label: MessageKey
   icon: IconName
-  /** Build phase that delivers the screen (shown on placeholders). */
-  phase: number
 }
 
 export const NAV: Record<Exclude<RouteId, 'more' | 'customerNew' | 'importOpening' | 'importMedicines'>, NavItem> = {
-  home: { id: 'home', label: 'nav.home', icon: 'home', phase: 9 },
-  customers: { id: 'customers', label: 'nav.customers', icon: 'users', phase: 2 },
-  newSale: { id: 'newSale', label: 'nav.newSale', icon: 'plus', phase: 4 },
-  payment: { id: 'payment', label: 'nav.payment', icon: 'wallet', phase: 5 },
-  reminders: { id: 'reminders', label: 'nav.reminders', icon: 'bell', phase: 8 },
-  reports: { id: 'reports', label: 'nav.reports', icon: 'chart', phase: 9 },
-  smsLog: { id: 'smsLog', label: 'nav.smsLog', icon: 'message', phase: 7 },
-  medicines: { id: 'medicines', label: 'nav.medicines', icon: 'pill', phase: 3 },
-  imports: { id: 'imports', label: 'nav.imports', icon: 'upload', phase: 6 },
-  settings: { id: 'settings', label: 'nav.settings', icon: 'settings', phase: 11 },
+  home: { id: 'home', label: 'nav.home', icon: 'home' },
+  customers: { id: 'customers', label: 'nav.customers', icon: 'users' },
+  newSale: { id: 'newSale', label: 'nav.newSale', icon: 'plus' },
+  payment: { id: 'payment', label: 'nav.payment', icon: 'wallet' },
+  reminders: { id: 'reminders', label: 'nav.reminders', icon: 'bell' },
+  reports: { id: 'reports', label: 'nav.reports', icon: 'chart' },
+  smsLog: { id: 'smsLog', label: 'nav.smsLog', icon: 'message' },
+  medicines: { id: 'medicines', label: 'nav.medicines', icon: 'pill' },
+  imports: { id: 'imports', label: 'nav.imports', icon: 'upload' },
+  settings: { id: 'settings', label: 'nav.settings', icon: 'settings' },
 }
 
 /** PC sidebar order. */

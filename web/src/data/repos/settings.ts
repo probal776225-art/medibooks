@@ -33,10 +33,17 @@ export function bootstrapSettings(): void {
   }).catch((e: unknown) => console.error('Settings bootstrap failed', e))
 }
 
-type EditableSection = 'shop' | 'billing'
+type EditableSection = 'shop' | 'billing' | 'sms' | 'reminder'
 
-/** Owner edit of one settings section (merge, fire-and-forget) + audit. */
-export function saveSettingsSection<K extends EditableSection>(key: K, before: ShopSettings[K], after: ShopSettings[K]): void {
+/**
+ * Owner edit of one settings section (merge, fire-and-forget) + audit. Only the fields given are written, so a
+ * field the Worker keeps (reminder.lastRunDate) is never overwritten with this device's older copy.
+ */
+export function saveSettingsSection<K extends EditableSection>(
+  key: K,
+  before: ShopSettings[K],
+  after: Partial<ShopSettings[K]>,
+): void {
   const ctx = writeContext()
   const batch = newBatch()
   batch.set(paths.settings(), { [key]: after, updatedAt: serverTimestamp() }, { merge: true })

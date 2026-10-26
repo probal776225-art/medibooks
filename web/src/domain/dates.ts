@@ -31,6 +31,11 @@ export function monthKey(ms: Millis): string {
   return inDhaka(ms).format('YYYY-MM')
 }
 
+/** 'YYYY-MM-DD' in Dhaka time (the reminder job's "already ran today" guard). */
+export function dhakaDate(ms: Millis): string {
+  return inDhaka(ms).format('YYYY-MM-DD')
+}
+
 /** 'YYMMDD' in Dhaka time (memo numbers). */
 export function yymmdd(ms: Millis): string {
   return inDhaka(ms).format('YYMMDD')

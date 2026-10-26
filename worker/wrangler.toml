@@ -1,0 +1,19 @@
+# MediBooks SMS Worker (Phase 7–8): sends the SMS queue and runs the daily due reminders.
+# These settings are for local development (`npm run dev` here): the Firebase emulator and a fake SMS provider,
+# so nothing is really sent. `npm run deploy:worker` (project root) deploys with the real values from
+# web/.env.deploy.local instead. Secrets (SMS_API_KEY, SERVICE_ACCOUNT_JSON) only via `wrangler secret put`.
+name = "medibooks-sms"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[triggers]
+crons = ["*/10 * * * *"]
+
+[vars]
+PROJECT_ID = "demo-baki"
+OWNER_UID = "REPLACE_WITH_OWNER_UID"
+FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080"
+SMS_PROVIDER = "fake"
+SMS_SENDER_ID = ""
+ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:4173,http://127.0.0.1:5173,http://127.0.0.1:4173"
