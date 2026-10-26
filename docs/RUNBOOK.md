@@ -2,9 +2,11 @@
 
 M/S ALLOPATHIC STORE & SURGICAL, R.K Mission Road, Sreemangal
 
-App er link: **https://medibooks.web.app** (Firebase project: `baki-khata-d7304`)
+App er link: **https://msallopathic.store** (nijer domain, Namecheap theke; Firebase project: `baki-khata-d7304`)
 
-Purono link `https://baki-khata-d7304.web.app` o eki app dekhay, eki data. Tobe notun phone/PC te **medibooks.web.app** i install korun. Purono link e install kora app thakle: "সিঙ্ক বাকি" 0 hole seta uninstall kore notun link e login + install + PIN korun.
+`https://medibooks.web.app` ar `https://baki-khata-d7304.web.app` o eki app dekhay, eki data. Notun phone/PC te **msallopathic.store** i install korun. Onno link e install kora app thakle: upore "সিঙ্ক বাকি" **0** hole seta uninstall kore notun link e login + install + PIN korun (protiti link alada app hisebe chole).
+
+**Domain (msallopathic.store):** Namecheap → Domain List → Manage → Advanced DNS e duita record ache: **A** `@` → `199.36.158.100` ar **TXT** `@` → `hosting-site=baki-khata-d7304`. Egulo muchben na. Domain protि bochhor Namecheap e renew korte hobe, na hole link bondho hoye jabe (purono link gulo tokhono cholbe).
 
 Ei khatay ache: prothombar setup, PC/phone e install, protidiner kaj, internet na thakle ki hoy, bhul thik kora, backup, SMS ar তাগাদা, Firebase er free limit dekha, ar kono somossa hole ki korben.
 
@@ -119,7 +121,7 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 ## 8. Staff (kormochari)
 
 - **Staff jog:** সেটিংস → **স্টাফ** → **+ স্টাফ যোগ করুন** → nam, staff er email ar ekta password (8+ okkhor) → **স্টাফ অ্যাকাউন্ট খুলুন** (internet lagbe). Email ar password staff ke bole din.
-- Staff nijer phone/PC te **medibooks.web.app** e oi email/password diye login korbe, tarpor nijer **PIN** chalu korbe.
+- Staff nijer phone/PC te **msallopathic.store** e oi email/password diye login korbe, tarpor nijer **PIN** chalu korbe.
 - **Staff ja parbe:** customer khuja/notun customer, **নতুন বাকি**, **জমা নিন**, prescription er chhobi, MedEx list theke oshudh jog (dam chara — dam apni thik korben).
 - **Staff ja parbe na:** বাতিল, dam/setting bodlano, ইমপোর্ট, ব্যাকআপ, ব্যালেন্স যাচাই, mobile number bodol, chhobi muchha. Staff shudhu **nijer** lenden ar **আমার রিপোর্ট** dekhbe; bazarer mot baki ba onno karo kaj dekhbe na.
 - **Kar kaj dekhte:** রিপোর্ট → **কার হিসাব** → সবাই / মালিক (আমি) / staff er nam.

@@ -1,6 +1,6 @@
 // Deploy the SMS Worker (Phase 7–8) to Cloudflare. Run from the project root: npm run deploy:worker
 // Needs `npx wrangler login` once (in worker/), and in web/.env.deploy.local: VITE_FIREBASE_PROJECT_ID, OWNER_UID,
-// SMS_SENDER_ID (and HOSTING_SITES). The secrets SMS_API_KEY and SERVICE_ACCOUNT_JSON are set once with
+// SMS_SENDER_ID (and HOSTING_SITES, CUSTOM_DOMAINS). The secrets SMS_API_KEY and SERVICE_ACCOUNT_JSON are set once with
 // `wrangler secret put` (docs/RUNBOOK.md §10) and are never in a file here.
 // worker/wrangler.toml stays the local-development config (emulator + fake SMS); this writes a copy with the real
 // project and provider to .deploy/wrangler.json (gitignored) and deploys that.
@@ -25,7 +25,12 @@ const pick = (key) => {
 const crons = /^crons\s*=\s*(\[.*\])/m.exec(toml)
 if (!crons) fail('worker/wrangler.toml has no crons.')
 
-const origins = hostingSites(env).flatMap((s) => [`https://${s}.web.app`, `https://${s}.firebaseapp.com`])
+// The app's own domains (CUSTOM_DOMAINS=msallopathic.store,…) too, with and without www.
+const customDomains = (env.CUSTOM_DOMAINS ?? '').split(',').map((d) => d.trim().toLowerCase()).filter(Boolean)
+const origins = [
+  ...hostingSites(env).flatMap((s) => [`https://${s}.web.app`, `https://${s}.firebaseapp.com`]),
+  ...customDomains.flatMap((d) => [`https://${d}`, `https://www.${d}`]),
+]
 const config = {
   name: pick('name'),
   main: '../worker/src/index.ts',
