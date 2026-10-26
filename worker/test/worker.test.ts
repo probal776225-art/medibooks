@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { autoId, fromFields, toFields, ts } from '../src/firestore'
 import { parseSendReply, toProviderNumber } from '../src/providers/bulksmsbd'
+import { apiKeyFrom } from '../src/providers'
 import { toReminderCustomer } from '../src/reminders'
 
 describe('Firestore values', () => {
@@ -19,6 +20,11 @@ describe('Firestore values', () => {
 })
 
 describe('bulksmsbd adapter', () => {
+  it('takes the key out of a pasted sample URL, or uses the value as it is', () => {
+    expect(apiKeyFrom('API URL (GET & POST) : http://bulksmsbd.net/api/smsapi?api_key=AbC123xyz&type=text&number=Receiver')).toBe('AbC123xyz')
+    expect(apiKeyFrom('  AbC123xyz \n')).toBe('AbC123xyz')
+  })
+
   it('sends to 8801XXXXXXXXX', () => {
     expect(toProviderNumber('01711460114')).toBe('8801711460114')
   })
