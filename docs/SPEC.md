@@ -107,7 +107,7 @@ Default `smsShortName`: `অ্যালোপ্যাথিক স্টোর
 
 **Per-customer** `smsEnabled` off → no queue item for that customer (reminders included).
 **SMS Log page:** list with status, kind, customer, segments, time; filter by status; retry failed; monthly count + estimated cost.
-**Provider:** bulksmsbd.net, non-masking sender id; its IP whitelist must be off (setup steps in `docs/RUNBOOK.md` §10).
+**Provider:** Automas (sms.automas.com.bd), non-masking sender id 8809617642327 (bulksmsbd.net until 2026-10-27); any IP whitelist in its panel must be off (setup steps in `docs/RUNBOOK.md` §10).
 
 ## 9. Reminder (তাগাদা)
 Rules (all editable in Settings → রিমাইন্ডার):

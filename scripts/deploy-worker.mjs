@@ -40,7 +40,7 @@ const config = {
   vars: {
     PROJECT_ID: projectId,
     OWNER_UID: env.OWNER_UID,
-    SMS_PROVIDER: 'bulksmsbd',
+    SMS_PROVIDER: 'automas',
     SMS_SENDER_ID: env.SMS_SENDER_ID,
     ALLOWED_ORIGINS: origins.join(','),
   },

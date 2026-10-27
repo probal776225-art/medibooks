@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { autoId, fromFields, toFields, ts } from '../src/firestore'
-import { parseSendReply, toProviderNumber } from '../src/providers/bulksmsbd'
+import { parseBalanceReply, parseSendReply } from '../src/providers/automas'
 import { apiKeyFrom } from '../src/providers'
 import { toReminderCustomer } from '../src/reminders'
 
@@ -19,36 +19,39 @@ describe('Firestore values', () => {
   })
 })
 
-describe('bulksmsbd adapter', () => {
+describe('Automas adapter', () => {
   it('takes the key out of a pasted sample URL, or uses the value as it is', () => {
-    expect(apiKeyFrom('API URL (GET & POST) : http://bulksmsbd.net/api/smsapi?api_key=AbC123xyz&type=text&number=Receiver')).toBe('AbC123xyz')
+    expect(apiKeyFrom('https://api.automas.com.bd/smsapiv3?apikey=AbC123xyz&sender=8809617642327&msisdn=01…&smstext=SMS Success')).toBe(
+      'AbC123xyz',
+    )
+    expect(apiKeyFrom('http://bulksmsbd.net/api/smsapi?api_key=AbC123xyz&type=text')).toBe('AbC123xyz')
     expect(apiKeyFrom('  AbC123xyz \n')).toBe('AbC123xyz')
   })
 
-  it('sends to 8801XXXXXXXXX', () => {
-    expect(toProviderNumber('01711460114')).toBe('8801711460114')
-  })
-
-  it('reads 202 as sent', () => {
-    expect(parseSendReply(200, '{"response_code":202,"message_id":5521,"success_message":"SMS Submitted Successfully","error_message":""}')).toEqual({
-      ok: true,
-      ref: '5521',
-    })
-    expect(parseSendReply(200, '{"response_code":202,"success_message":"SMS Submitted Successfully"}')).toEqual({
-      ok: true,
-      ref: 'SMS Submitted Successfully',
-    })
+  it('reads status 0 as sent', () => {
+    expect(parseSendReply(200, '{"response":[{"status":0,"id":296334,"msisdn":"01886888816"}]}')).toEqual({ ok: true, ref: '296334' })
   })
 
   it('retries only failures where nothing went out and a later try can work', () => {
-    expect(parseSendReply(200, '{"response_code":1007,"error_message":"Balance Insufficient"}')).toEqual({
+    // Replies as the live API gives them (a failure carries an id too).
+    expect(parseSendReply(200, '{"response":[{"status":106,"id":122967,"msisdn":"01711000000"}]}')).toEqual({
       ok: false,
-      error: '1007 Balance Insufficient',
-      retry: true,
+      error: '106 Incorrect API key',
+      retry: false,
     })
-    expect(parseSendReply(200, '{"response_code":1001,"error_message":""}')).toEqual({ ok: false, error: '1001 Invalid number', retry: false })
-    expect(parseSendReply(200, '{"response_code":"1032"}')).toMatchObject({ ok: false, retry: false, error: expect.stringContaining('whitelist') })
+    expect(parseSendReply(200, '{"response":[{"status":105,"id":128576,"msisdn":"NA"}]}')).toEqual({ ok: false, error: '105 Invalid number', retry: false })
+    expect(parseSendReply(200, '{"response":[{"status":"1000","id":1}]}')).toEqual({ ok: false, error: '1000 Insufficient balance', retry: true })
+    expect(parseSendReply(200, '{"response":[{"status":108,"id":1}]}')).toMatchObject({ ok: false, retry: false, error: expect.stringContaining('whitelist') })
+    expect(parseSendReply(200, '{"response":[{"status":3300,"id":1}]}')).toMatchObject({ ok: false, retry: true })
     expect(parseSendReply(502, '<html>Bad gateway</html>')).toEqual({ ok: false, error: 'HTTP 502: <html>Bad gateway</html>', retry: false })
+    expect(parseSendReply(200, '{"response":[]}')).toMatchObject({ ok: false, retry: false })
+  })
+
+  it('reads the balance, and an error code as an error', () => {
+    expect(parseBalanceReply('{"response":"1234.50"}')).toBe(1234.5)
+    expect(parseBalanceReply('{"response":"0.00"}')).toBe(0)
+    expect(() => parseBalanceReply('{"response":"104"}')).toThrow('104 Invalid user')
+    expect(() => parseBalanceReply('<html>')).toThrow('balance')
   })
 })
 

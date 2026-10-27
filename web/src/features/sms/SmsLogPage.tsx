@@ -73,12 +73,17 @@ function MonthCard() {
   )
 }
 
-/** What the owner can do about a provider error (bulksmsbd codes). */
+const ACCOUNT_CODES = new Set([102, 103, 104, 106, 107, 109, 2400])
+
+/** What the owner can do about a provider error (Automas codes; 1001–1032 are bulksmsbd's, used until 2026-10-27). */
 function errorHint(lastError: string): MessageKey | null {
-  const code = /^(\d{3,4})\b/.exec(lastError)?.[1]
-  if (code === '1032') return 'smslog.hint1032'
-  if (code === '1007' || code === '1006') return 'smslog.hintBalance'
-  if (code === '1001' || code === '1004') return 'smslog.hintNumber'
+  const code = Number(/^(\d{3,4})\b/.exec(lastError)?.[1] ?? NaN)
+  if (code === 108) return 'smslog.hintIp'
+  if (code === 1000) return 'smslog.hintBalance'
+  if (code === 105) return 'smslog.hintNumber'
+  if (code === 110) return 'smslog.hintDnd'
+  if (ACCOUNT_CODES.has(code)) return 'smslog.hintAccount'
+  if (code >= 1001 && code <= 1032) return 'smslog.hintOldProvider'
   if (lastError.startsWith('network')) return 'smslog.hintNetwork'
   return null
 }

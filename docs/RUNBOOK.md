@@ -101,14 +101,14 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 ## 5b. Launch checklist (ekbar)
 
 1. **Test er data muchhe din:** test customer gulo (jemon "Probal", "pp") → **কাস্টমার মুছুন** → **DELETE** → **সব লেনদেনসহ মুছে ফেলুন**.
-2. **SMS:** bulksmsbd panel → **Phone Book → IP White List → Disable** (OTP). Tarpor সেটিংস → SMS → **টেস্ট SMS পাঠান** → phone e ashle **টেস্ট মোড বন্ধ**. **SMS লগ** e "যায়নি" thakle **যায়নি এমন সব আবার পাঠান**.
-3. **SMS er dam:** সেটিংস → SMS → **প্রতি SMS-এর দাম** (jemon `0.35`).
+2. **SMS (Automas):** Automas er API key SMS server e bosan (§10 setup 6). Tarpor সেটিংস → SMS → **টেস্ট SMS পাঠান** → phone e ashle **টেস্ট মোড বন্ধ**. **SMS লগ** e "যায়নি" thakle **যায়নি এমন সব আবার পাঠান**.
+3. **SMS er dam:** সেটিংস → SMS → **প্রতি SMS-এর দাম** (Automas er rate, jemon `0.24`).
 4. **Tagada er niyom:** সেটিংস → **তাগাদা** (৳ koto, koydin por por, kokhon).
 5. **Dokaner tottho:** সেটিংস → **দোকানের তথ্য** (nam, thikana, phone, SMS-e nam).
 6. **Protiti phone/PC:** **https://msallopathic.store** → login → **Install** → **PIN** chalu.
 7. **Staff:** সেটিংস → **স্টাফ** → account → staff ke link + login din.
 8. **Prothom backup:** সেটিংস → **ব্যাকআপ নিন** → Google Drive e rakhun.
-9. **Nirapotta:** chat e asha bulksmsbd API key ar Firebase key notun kore banan (§10).
+9. **Nirapotta:** chat e asha Automas API key ar Firebase key notun kore banan (§10).
 
 ## 6. Backup (proti soptahe)
 
@@ -156,28 +156,28 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 
 ## 10. SMS ar তাগাদা
 
-SMS jay **bulksmsbd.net** diye, ekta chhoto free server er maddhome (**Cloudflare Worker**). API key shudhu oi server e thake — app ba phone e kokhono na.
+SMS jay **Automas** (sms.automas.com.bd, sender id `8809617642327`) diye, ekta chhoto free server er maddhome (**Cloudflare Worker**). API key shudhu oi server e thake — app ba phone e kokhono na. (2026-10-27 porjonto chilo bulksmsbd.net; purono "যায়নি" SMS e **আবার পাঠান** dile ekhon Automas diye jay.)
 
 ### Ekbar-i korte hobe (setup)
 
-1. **bulksmsbd panel:** login → **Phone Book → IP White List** → **IP White Listing Setting** → **Disable** → phone e asha OTP din. (Cloudflare er IP bodlay, whitelist chalu thakle SMS jabe na — error `1032`.)
+1. **Automas panel:** login → API key ar sender id dekhe nin. Panel e kono **IP whitelist** chalu thakle bondho korun (Cloudflare er IP bodlay; chalu thakle SMS jabe na — error `108`).
 2. **Cloudflare:** **dash.cloudflare.com/sign-up** e free account khulun (card lagbe na). Email verify korun.
 3. Terminal e (project folder er `worker` folder theke) `npx wrangler login` → browser e **Allow** chapun.
 4. **Firebase er "service account" file:** console.firebase.google.com → project → ⚙️ **Project settings → Service accounts → Generate new private key → Generate key**. Ekta `.json` file Downloads e ashbe. **Eta karo sathe share korben na.**
 5. Claude ke bolun "Worker deploy koro" — Claude `npm run deploy:worker` chalabe (ekta link dibe: `https://medibooks-sms.….workers.dev`).
 6. Terminal e `worker` folder theke duita command (key/file **chat e paste korben na**):
-   - `npx wrangler secret put SMS_API_KEY --name medibooks-sms` → bulksmsbd er API key paste kore Enter.
+   - `npx wrangler secret put SMS_API_KEY --name medibooks-sms` → Automas er API key paste kore Enter (puro API URL paste korleo hoy; server shudhu `apikey=` er man ta ney). **Key bodlale** shudhu ei command ta abar chalan — deploy lage na.
    - `npx wrangler secret put SERVICE_ACCOUNT_JSON --name medibooks-sms < ~/Downloads/<oi-file>.json`
    - Tarpor Downloads theke oi `.json` file ta **muche** din (Trash o khali korun).
 7. Claude app ta abar deploy korbe (Worker er link app e boshe).
-8. App e: সেটিংস → **SMS** → **টেস্ট SMS পাঠান** → nijer number → **পাঠান**. Phone e SMS ashle **টেস্ট মোড** **বন্ধ** korun. Ekhane **প্রতি SMS-এর দাম** (jemon `0.35`) dile khorcher hisab dekhabe.
+8. App e: সেটিংস → **SMS** → **টেস্ট SMS পাঠান** → nijer number → **পাঠান**. Phone e SMS ashle **টেস্ট মোড** **বন্ধ** korun. Ekhane **প্রতি SMS-এর দাম** (jemon `0.24`) dile khorcher hisab dekhabe.
 
 ### Protidin
 
 - **নতুন বাকি** ba **জমা নিন** save korlei customer SMS pay (customer er **SMS পাঠাবে** chalu thakle). Save er por niche lekha thake SMS jacche kina.
 - Internet na thakle SMS phone e jome thake, internet ele nije chole jay (ba server 10 minute por por nije pathay). Ek SMS dui bar jay na.
 - **SMS লগ** (আরও → SMS লগ): sob SMS, **পাঠানো / অপেক্ষায় / যায়নি / টেস্ট**. "যায়নি" hole karon lekha thake, **আবার পাঠান** chapa jay. Upore ei maser SMS songkha ar khoroch.
-- সেটিংস → SMS → **ব্যালেন্স দেখুন**: bulksmsbd te koto taka ache. Balance shesh hole SMS "যায়নি (1007)" hobe — recharge kore SMS লগ e **আবার পাঠান**.
+- সেটিংস → SMS → **ব্যালেন্স দেখুন**: Automas e koto taka ache. Balance shesh hole SMS "যায়নি (1000)" hobe — recharge kore SMS লগ e **আবার পাঠান**. Onno error e (108 IP whitelist, 105 bhul number, 110 DND, 106 bhul key) SMS লগ e Bangla te lekha thake ki korte hobe.
 - **SMS er lekha bodlate:** সেটিংস → SMS → **SMS-এর লেখা** → **এডিট**. Nam/taka/mot baki er bolgula chap diye bosano jay; niche namuna ar koto bhag (khoroch) dekhay. Bangla SMS e 70 okkhor = 1 bhag; beshi hole 67 okkhore 1 bhag.
 
 ### তাগাদা (baki r reminder)

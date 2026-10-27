@@ -6,7 +6,7 @@ let count = 0
 export const fakeProvider: SmsProvider = {
   name: 'fake',
   async send(to, text) {
-    if (text.includes('[fail]')) return { ok: false, error: '1005 fake failure', retry: true }
+    if (text.includes('[fail]')) return { ok: false, error: '3300 fake failure', retry: true }
     count += 1
     console.log(`[fake sms] to ${to}: ${text}`)
     return { ok: true, ref: `fake-${count}` }
