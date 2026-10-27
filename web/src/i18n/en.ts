@@ -452,6 +452,11 @@ export const en: Messages = {
   'pwa.offlineReady': 'The app now works without internet.',
   'pwa.ok': 'OK',
 
+  'move.working': 'Moving to the new address…',
+  'move.banner': 'This link is old. Use {site} from now on — sign in there once and install the app.',
+  'move.go': 'Go to the new link',
+  'move.notYet': 'Not everything has reached the server yet. Keep the internet on and tap again in a moment.',
+
   'shortcut.hint': 'F2 new invoice · F4 take payment',
 
   'lock.title': 'Enter PIN',

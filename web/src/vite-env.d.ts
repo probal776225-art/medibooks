@@ -9,6 +9,8 @@ interface ImportMetaEnv {
   readonly VITE_EMULATOR_HOST?: string
   readonly VITE_OWNER_UID?: string
   readonly VITE_WORKER_URL?: string
+  /** The one public address (https://msallopathic.store); the Firebase default addresses move there. Unset locally. */
+  readonly VITE_MAIN_ORIGIN?: string
 }
 
 interface ImportMeta {

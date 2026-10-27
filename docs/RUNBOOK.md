@@ -4,9 +4,13 @@ M/S ALLOPATHIC STORE & SURGICAL, R.K Mission Road, Sreemangal
 
 App er link: **https://msallopathic.store** (nijer domain, Namecheap theke; Firebase project: `baki-khata-d7304`)
 
-`https://medibooks.web.app` ar `https://baki-khata-d7304.web.app` o eki app dekhay, eki data. Notun phone/PC te **msallopathic.store** i install korun. Onno link e install kora app thakle: upore "সিঙ্ক বাকি" **0** hole seta uninstall kore notun link e login + install + PIN korun (protiti link alada app hisebe chole).
+**Ek link-i sob:** `medibooks.web.app`, `baki-khata-d7304.web.app`, `…firebaseapp.com` (ar `www.msallopathic.store`) khulle app nijei **msallopathic.store** e niye jay, eki page e. Login kora thakle age ei phone er na-pathano hisab server e pathay, tarpor jay. Internet na thakle jay na: upore holud lekha "এই লিংক পুরনো" ar **নতুন লিংকে যান** button thake (internet ele chapun). Purono link e install kora app: notun link e ekbar login + **Install** + **PIN** korun, tarpor purono app ta uninstall korun (protiti link alada app hisebe chole).
 
-**Domain (msallopathic.store):** kena Namecheap theke, kintu nameserver **Cloudflare** e (beau/nia.ns.cloudflare.com), tai DNS record gulo thake **dash.cloudflare.com → msallopathic.store → DNS → Records** e: **A** `@` → `199.36.158.100` (**DNS only**, dhusor megh ☁️; komla megh/proxy chalu korle app "Site Not Found" dekhay) ar **TXT** `@` → `hosting-site=baki-khata-d7304`. Egulo muchben na. https certificate Firebase nijei banay o renew kore. Domain proti bochhor **Namecheap e renew** korte hobe, na hole link bondho hoye jabe (medibooks.web.app tokhono cholbe).
+**Domain (msallopathic.store):** kena Namecheap theke, kintu nameserver **Cloudflare** e (beau/nia.ns.cloudflare.com), tai DNS record gulo thake **dash.cloudflare.com → msallopathic.store → DNS → Records** e: **A** `@` → `199.36.158.100` (**DNS only**, dhusor megh ☁️; komla megh/proxy chalu korle app "Site Not Found" dekhay) ar **TXT** `@` → `hosting-site=baki-khata-d7304`. Egulo muchben na. https certificate Firebase nijei banay o renew kore. Domain proti bochhor **Namecheap e renew** korte hobe, na hole link bondho hoye jabe — ar purono link gulo o oi bondho link e pathabe. Tokhon Claude ke bolun: `web/.env.deploy.local` theke `VITE_MAIN_ORIGIN` line muche `npm run deploy` korle medibooks.web.app abar nijei chole.
+
+**www.msallopathic.store (ichchha hole):** Firebase console → Hosting → **baki-khata-d7304** site → **Add custom domain** → `www.msallopathic.store` → **"Redirect … to an existing website"** tick → `msallopathic.store` → je record dekhay (A / TXT) Cloudflare DNS e `www` name diye **DNS only** bosan.
+
+**Password bhule gele email er link** o nijer domain e dekhate (ichchha hole): Firebase console → **Authentication → Templates → Password reset → ✏️ → Customize action URL** → `https://msallopathic.store/__/auth/action` → **Save**.
 
 Ei khatay ache: prothombar setup, PC/phone e install, protidiner kaj, internet na thakle ki hoy, bhul thik kora, backup, SMS ar তাগাদা, Firebase er free limit dekha, ar kono somossa hole ki korben.
 

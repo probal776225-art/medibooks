@@ -5,6 +5,7 @@ import { useT } from '../i18n'
 import { useDataStore } from '../stores/data'
 import { useOnline, usePendingCount } from '../stores/sync'
 import { useUiStore } from '../stores/ui'
+import { MainAddressBanner } from './MainAddress'
 import { ReloadPrompt } from './ReloadPrompt'
 import { useIsStaff, useRoleStore } from '../stores/role'
 import { NAV, ROUTES, SIDEBAR, STAFF_HIDDEN, type NavItem } from './routes'
@@ -134,6 +135,7 @@ export function Layout() {
   return (
     <div className="flex min-h-dvh flex-col bg-slate-50 text-slate-900">
       <Header />
+      <MainAddressBanner />
       <div className="flex flex-1">
         <Sidebar />
         <main className="min-w-0 flex-1 px-4 pt-4 pb-28 md:px-8 md:pb-8">

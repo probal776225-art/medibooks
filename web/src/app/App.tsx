@@ -21,6 +21,7 @@ import { startSessionData, stopSessionData } from '../stores/data'
 import { startIdleWatch, unlockAfterLogin, useLockStore } from '../stores/lock'
 import { startRole, stopRole, useIsOwner, useRoleStore } from '../stores/role'
 import { Layout } from './Layout'
+import { useMovingToMainAddress } from './MainAddress'
 import { ROUTES } from './routes'
 
 // Screens used now and then load on demand (still precached by the service worker, so they open offline).
@@ -64,10 +65,12 @@ const router = createBrowserRouter([
   },
 ])
 
-function Splash() {
+function Splash({ moving = false }: { moving?: boolean }) {
   const t = useT()
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-slate-50 text-slate-500">{t('app.loading')}</main>
+    <main className="flex min-h-dvh items-center justify-center bg-slate-50 text-slate-500">
+      {t(moving ? 'move.working' : 'app.loading')}
+    </main>
   )
 }
 
@@ -78,6 +81,7 @@ export function App() {
   const role = useRoleStore((s) => s.role)
   const locked = useLockStore((s) => s.locked)
   const prevStatus = useRef(status)
+  const moving = useMovingToMainAddress(status !== 'loading')
 
   useEffect(() => initAuth(), [])
   useEffect(() => startIdleWatch(), [])
@@ -108,6 +112,7 @@ export function App() {
   // SMS this device queued while offline (or before a reload) go to the Worker once they reach the server.
   useEffect(() => (allowed ? startSmsOutbox() : undefined), [allowed])
 
+  if (moving) return <Splash moving={status !== 'loading'} />
   if (status === 'loading') return <Splash />
   if (status === 'signedOut') return <LoginPage />
   if (role === 'loading') return <Splash />

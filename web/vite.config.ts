@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => {
     if (env.VITE_WORKER_URL && !env.VITE_WORKER_URL.startsWith('https://')) {
       throw new Error('VITE_WORKER_URL must be the deployed https Worker, or empty, in web/.env.deploy.local.')
     }
+    if (env.VITE_MAIN_ORIGIN && !/^https:\/\/[a-z0-9.-]+$/.test(env.VITE_MAIN_ORIGIN)) {
+      throw new Error('VITE_MAIN_ORIGIN must be https://<domain> with no path (web/.env.deploy.local).')
+    }
   }
   return {
     // The start-up chunk is mostly the Firebase SDK (Firestore with its offline cache); rarely used screens are split off.
@@ -46,6 +49,8 @@ export default defineConfig(({ mode }) => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
           navigateFallback: '/index.html',
+          // Firebase's own pages (password reset links: /__/auth/action) must reach Hosting, not the app.
+          navigateFallbackDenylist: [/^\/__\//],
         },
       }),
     ],
