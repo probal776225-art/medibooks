@@ -2,11 +2,11 @@ import {
   Bytes,
   getDocsFromServer,
   increment,
-  limit,
   onSnapshot,
   query,
   serverTimestamp,
   Timestamp,
+  updateDoc,
   where,
   type Unsubscribe,
 } from 'firebase/firestore'
@@ -177,31 +177,45 @@ export async function changeCustomerMobile(
   return newMobile
 }
 
-/** A customer who never had a transaction and owes nothing can be deleted for good. */
-export const canDeleteCustomer = (c: Customer) => c.lastTxnAt === null && c.totalDuePaisa === 0
+/** Any bill, payment or due on record (then deleting removes those too). */
+export const customerHasHistory = (c: Customer) => c.lastTxnAt !== null || c.totalDuePaisa !== 0
 
 /**
- * Delete a customer added by mistake, with their prescription photos. Online only and awaited: it first checks
- * the server for any transaction (the rules allow it only with no history and no due). Anyone with history is
- * archived instead — transactions are never deleted.
+ * Delete a customer for good with everything on record: transactions, prescription photos, the customer itself
+ * (owner only, online, awaited). The owner chose this over archiving on 2026-10-27; the audit log keeps a summary.
+ * Order: mark the customer `deleting` (only then do the rules let its transactions go), delete the transactions
+ * 400 per batch, the photos, and last the customer with the audit entry. If it stops half-way the customer is still
+ * there, still marked, and running it again finishes the rest.
  */
-export async function deleteCustomer(c: Customer): Promise<void> {
-  if (!canDeleteCustomer(c)) throw new DomainError('CUSTOMER_HAS_HISTORY')
+export async function deleteCustomer(c: Customer, onProgress?: (done: number, total: number) => void): Promise<void> {
+  const ctx = writeContext()
+  await updateDoc(paths.customer(c.mobile), { deleting: true, updatedAt: serverTimestamp() })
   const [txns, photos] = await Promise.all([
-    getDocsFromServer(query(paths.transactions(), where('customerId', '==', c.mobile), limit(1))),
+    getDocsFromServer(query(paths.transactions(), where('customerId', '==', c.mobile))),
     getDocsFromServer(query(paths.prescriptions(), where('customerId', '==', c.mobile))),
   ])
-  if (!txns.empty) throw new DomainError('CUSTOMER_HAS_HISTORY')
-  const ctx = writeContext()
-  const batch = newBatch()
-  batch.delete(paths.customer(c.mobile))
-  let bytes = 0
-  for (const d of photos.docs) {
-    batch.delete(d.ref)
-    batch.delete(paths.prescriptionImage(d.id))
-    const data = d.data()
-    bytes += Number(data.imageBytes ?? 0) + (data.thumb instanceof Bytes ? data.thumb.toUint8Array().length : 0)
+  const total = txns.size
+  onProgress?.(0, total)
+  for (let i = 0; i < txns.docs.length; i += 400) {
+    const batch = newBatch()
+    for (const d of txns.docs.slice(i, i + 400)) batch.delete(d.ref)
+    await batch.commit()
+    onProgress?.(Math.min(i + 400, total), total)
   }
+
+  let bytes = 0
+  for (let i = 0; i < photos.docs.length; i += 200) {
+    const batch = newBatch()
+    for (const d of photos.docs.slice(i, i + 200)) {
+      batch.delete(d.ref)
+      batch.delete(paths.prescriptionImage(d.id))
+      const data = d.data()
+      bytes += Number(data.imageBytes ?? 0) + (data.thumb instanceof Bytes ? data.thumb.toUint8Array().length : 0)
+    }
+    await batch.commit()
+  }
+
+  const batch = newBatch()
   if (photos.size) {
     batch.set(
       paths.usageStats(),
@@ -209,13 +223,21 @@ export async function deleteCustomer(c: Customer): Promise<void> {
       { merge: true },
     )
   }
+  batch.delete(paths.customer(c.mobile))
   auditInBatch(
     batch,
     {
       action: 'customer.delete',
       entity: 'customer',
       entityId: c.mobile,
-      before: { name: c.name, address: c.address, note: c.note, photos: photos.size },
+      before: {
+        name: c.name,
+        address: c.address,
+        note: c.note,
+        totalDuePaisa: c.totalDuePaisa,
+        transactions: total,
+        photos: photos.size,
+      },
       after: null,
     },
     ctx,

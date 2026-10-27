@@ -98,16 +98,30 @@ describe('customers', () => {
     await assertSucceeds(setDoc(ref, { ...profile, name: 'Rahim Uddin', totalDuePaisa: increment(0) }, { merge: true }))
   })
 
-  it('only a customer without any history can be deleted; mobile cannot change in place', async () => {
-    await seed(`${SHOP}/customers/${MOBILE}`, { ...customer(), lastTxnAt: 1 })
-    await assertFails(deleteDoc(doc(owner(), `${SHOP}/customers/${MOBILE}`)))
-    await seed(`${SHOP}/customers/01811111111`, { ...customer('01811111111'), totalDuePaisa: 500 })
-    await assertFails(deleteDoc(doc(owner(), `${SHOP}/customers/01811111111`)))
-    await seed(`${SHOP}/customers/01911111111`, customer('01911111111'))
-    await assertFails(deleteDoc(doc(stranger(), `${SHOP}/customers/01911111111`)))
-    await assertSucceeds(deleteDoc(doc(owner(), `${SHOP}/customers/01911111111`)))
+  it('only the owner deletes a customer, with or without history; mobile cannot change in place', async () => {
+    await seed(`${SHOP}/customers/${MOBILE}`, { ...customer(), totalDuePaisa: 500, lastTxnAt: 1 })
+    await assertFails(deleteDoc(doc(stranger(), `${SHOP}/customers/${MOBILE}`)))
     await assertFails(updateDoc(doc(owner(), `${SHOP}/customers/${MOBILE}`), { mobile: '01811111111' }))
     await assertFails(updateDoc(doc(owner(), `${SHOP}/customers/${MOBILE}`), { totalDuePaisa: 12.5 }))
+    await assertSucceeds(deleteDoc(doc(owner(), `${SHOP}/customers/${MOBILE}`)))
+  })
+
+  it('transactions are deleted only while their whole customer is being deleted', async () => {
+    await seed(`${SHOP}/customers/${MOBILE}`, { ...customer(), totalDuePaisa: 5000, lastTxnAt: 1 })
+    await seed(`${SHOP}/transactions/t1`, { ...sale(), createdBy: OWNER })
+    await assertFails(deleteDoc(doc(owner(), `${SHOP}/transactions/t1`)))
+    await assertSucceeds(updateDoc(doc(owner(), `${SHOP}/customers/${MOBILE}`), { deleting: true }))
+    await assertFails(deleteDoc(doc(stranger(), `${SHOP}/transactions/t1`)))
+    await assertSucceeds(deleteDoc(doc(owner(), `${SHOP}/transactions/t1`)))
+    // 400 in one batch (the app's batch size): the customer check must stay within the rules' read limits.
+    for (let i = 0; i < 400; i++) await seed(`${SHOP}/transactions/b${i}`, { ...sale(), createdBy: OWNER })
+    const db = owner()
+    const batch = writeBatch(db)
+    for (let i = 0; i < 400; i++) batch.delete(doc(db, `${SHOP}/transactions/b${i}`))
+    await assertSucceeds(batch.commit())
+    // Leftovers of a customer already deleted can go too.
+    await seed(`${SHOP}/transactions/orphan`, { ...sale(), customerId: '01822222222', createdBy: OWNER })
+    await assertSucceeds(deleteDoc(doc(owner(), `${SHOP}/transactions/orphan`)))
   })
 })
 
@@ -121,7 +135,8 @@ describe('transactions', () => {
     await assertSucceeds(batch.commit())
   })
 
-  it('is append-only: no delete, no amount change, no pre-voided create', async () => {
+  it('is append-only: no delete (customer not being deleted), no amount change, no pre-voided create', async () => {
+    await seed(`${SHOP}/customers/${MOBILE}`, { ...customer(), totalDuePaisa: 5000 })
     await seed(`${SHOP}/transactions/t1`, sale())
     await assertFails(deleteDoc(doc(owner(), `${SHOP}/transactions/t1`)))
     await assertFails(updateDoc(doc(owner(), `${SHOP}/transactions/t1`), { netPaisa: 1 }))
@@ -303,6 +318,8 @@ describe('staff (Phase 14)', () => {
     await seed(`${SHOP}/medicines/m1`, { brandName: 'Napa', shopUnitPricePaisa: null })
     const db = staff()
     await assertFails(updateDoc(doc(db, `${SHOP}/transactions/mine`), { voided: true, voidReason: 'x', voidedAt: 1, voidedBy: STAFF }))
+    await seed(`${SHOP}/customers/${MOBILE}`, { ...customer(), deleting: true })
+    await assertFails(deleteDoc(doc(db, `${SHOP}/transactions/mine`)))
     await assertFails(updateDoc(doc(db, `${SHOP}/customers/${MOBILE}`), { name: 'Other' }))
     await assertFails(updateDoc(doc(db, `${SHOP}/customers/${MOBILE}`), { smsEnabled: false }))
     await assertFails(setDoc(doc(db, `${SHOP}/settings/general`), { a: 2 }))

@@ -73,6 +73,16 @@ function MonthCard() {
   )
 }
 
+/** What the owner can do about a provider error (bulksmsbd codes). */
+function errorHint(lastError: string): MessageKey | null {
+  const code = /^(\d{3,4})\b/.exec(lastError)?.[1]
+  if (code === '1032') return 'smslog.hint1032'
+  if (code === '1007' || code === '1006') return 'smslog.hintBalance'
+  if (code === '1001' || code === '1004') return 'smslog.hintNumber'
+  if (lastError.startsWith('network')) return 'smslog.hintNetwork'
+  return null
+}
+
 function SmsRow({ item }: { item: SmsQueueItem }) {
   const t = useT()
   const f = useFormat()
@@ -105,6 +115,9 @@ function SmsRow({ item }: { item: SmsQueueItem }) {
           {item.lastError}
           {waitingRetry && ` · ${t('smslog.willRetry')}`}
         </p>
+      )}
+      {(item.status === 'failed' || waitingRetry) && errorHint(item.lastError) && (
+        <p className="mt-1 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{t(errorHint(item.lastError)!)}</p>
       )}
       {item.status === 'failed' && (
         <Button variant="outline" className="mt-2 min-h-10 text-sm" onClick={() => retrySms(item)}>
@@ -158,9 +171,15 @@ export function SmsLogPage() {
 
   const items = useMemo(() => [...(first ?? []), ...older], [first, older])
   const waiting = items.filter((i) => i.status === 'pending').map((i) => i.id)
+  const failedItems = items.filter((i) => i.status === 'failed')
 
   function sendWaiting() {
     sendQueued(waiting).catch((e: unknown) => console.error(e))
+    useToastStore.getState().show('info', 'smslog.asked')
+  }
+
+  function retryAllFailed() {
+    for (const i of failedItems) retrySms(i)
     useToastStore.getState().show('info', 'smslog.asked')
   }
 
@@ -196,6 +215,11 @@ export function SmsLogPage() {
         {waiting.length > 0 && online && smsServerConfigured && (
           <Button variant="outline" className="mt-3 w-full" onClick={sendWaiting}>
             {t('smslog.sendPending')}
+          </Button>
+        )}
+        {failedItems.length > 1 && online && smsServerConfigured && (
+          <Button variant="outline" className="mt-3 w-full" onClick={retryAllFailed}>
+            {t('smslog.retryAll', { count: failedItems.length })}
           </Button>
         )}
         {failed ? (

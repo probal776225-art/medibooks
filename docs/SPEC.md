@@ -29,7 +29,7 @@ Fields: **Name, Mobile, Address** (+ optional note). Mobile is the unique key (o
 
 **Customer list:** search; sort by due (desc, default), name, last activity, aging; filters: due > 0, due ≥ ৳5,000, SMS off, archived.
 **Aging badge:** days since `lastPaymentAt` (or first baki if never paid): green < 30, yellow 30–60, red > 60.
-**Customer detail:** buttons বাকি দিন · জমা নিন · স্টেটমেন্ট (PNG) · কল (`tel:`) · এখনই রিমাইন্ডার; per-customer **SMS on/off** and **Reminder on/off**; ledger with running balance (computed on display), void action, edit name/address, **change mobile** (moves the doc + updates its transactions in batches ≤ 450, audit logged), **কাস্টমার মুছুন** (owner only): a customer with no transactions and no due (added by mistake) is deleted for good together with their prescription photos (online, confirm, audit logged); a customer with any history cannot be deleted — the dialog offers **লুকিয়ে রাখুন (আর্কাইভ)** instead, warning that an archived due leaves "বাজারে মোট বাকি".
+**Customer detail:** buttons বাকি দিন · জমা নিন · স্টেটমেন্ট (PNG) · কল (`tel:`) · এখনই রিমাইন্ডার; per-customer **SMS on/off** and **Reminder on/off**; ledger with running balance (computed on display), void action, edit name/address, **change mobile** (moves the doc + updates its transactions in batches ≤ 450, audit logged), **কাস্টমার মুছুন** (owner only): a customer with no transactions is deleted after one confirm; a customer with history is deleted **with all transactions, the due and photos** after typing DELETE (online, audit logged, backup suggested), or hidden with **লুকিয়ে রাখুন (আর্কাইভ)** instead. The edit form also changes the **mobile number** (same as change mobile).
 
 ## 4. New Baki (নতুন বাকি) — the most-used screen, must be fast
 Step 1: mobile → customer card / new form (section 3).
@@ -69,7 +69,7 @@ Step 2: choose mode with a toggle:
 
 ## 6. Void / correction
 - Any transaction can be voided with a reason (required). Batch: `voided: true`, reverse increment, auditLog.
-- Voided rows stay visible (struck through) in the ledger. No hard delete anywhere.
+- Voided rows stay visible (struck through) in the ledger. Single transactions are never deleted; only deleting a whole customer (owner, typed DELETE) removes their transactions.
 - Settings → **ব্যালেন্স যাচাই** (repair): recompute each customer's due from non-voided `effectPaisa`, list mismatches, fix with `increment(diff)` + audit.
 
 ## 7. Opening balance bulk entry (চালু বাকি ইমপোর্ট)

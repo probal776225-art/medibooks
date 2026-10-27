@@ -17,7 +17,6 @@ export type DomainErrorCode =
   | 'INVALID_URL'
   | 'MOBILE_TAKEN'
   | 'SAME_MOBILE'
-  | 'CUSTOMER_HAS_HISTORY'
 
 export class DomainError extends Error {
   readonly code: DomainErrorCode

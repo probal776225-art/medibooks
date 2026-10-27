@@ -69,14 +69,18 @@ service cloud.firestore {
         allow update: if (isOwner() && validCustomer() && unchanged(['mobile']))
           // Staff: only what a sale or payment changes (due via increment, last activity).
           || (isStaff() && validCustomer() && onlyChanges(['totalDuePaisa', 'lastTxnAt', 'lastPaymentAt', 'updatedAt']));
-        // Only a customer who never had a transaction and owes nothing (e.g. added by mistake); anyone with
-        // history is archived instead, because transactions are never deleted.
-        allow delete: if isOwner() && resource.data.totalDuePaisa == 0 && resource.data.get('lastTxnAt', null) == null;
+        // The owner may delete a customer for good. With history this is "delete with everything" (owner's choice,
+        // 2026-10-27): the app first marks the customer `deleting`, removes the transactions, then the customer.
+        allow delete: if isOwner();
       }
 
       // Append-only. Amounts never change. Allowed edits: a one-time void, or moving the transaction to the
       // customer's new mobile number (change-mobile, Phase 6) — nothing else in the same write.
+      // The only delete: the owner deleting a whole customer (marked `deleting` first), or leftovers of one already gone.
       match /transactions/{txnId} {
+        function customerDoc() {
+          return /databases/$(database)/documents/shops/$(shopId)/customers/$(resource.data.customerId);
+        }
         // Staff see only their own transactions (their queries must filter createdBy == their uid).
         allow read: if isOwner() || (isStaff() && resource.data.createdBy == request.auth.uid);
         allow create: if (isOwner() || staffWrite('createdBy'))
@@ -91,7 +95,7 @@ service cloud.firestore {
             && request.resource.data.customerId is string
             && request.resource.data.customerId.matches('^01[3-9][0-9]{8}$'))
         );
-        allow delete: if false;
+        allow delete: if isOwner() && (!exists(customerDoc()) || get(customerDoc()).data.get('deleting', false) == true);
       }
 
       // Never deleted; deactivate with status instead.

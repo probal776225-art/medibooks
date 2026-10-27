@@ -90,12 +90,25 @@ Eta Firebase e apnar nijer "project" banano. Free (Spark plan), kono card lagbe 
 
 - **Bhul lenden:** customer page → লেনদেনের হিসাব → lenden e tap → **এই লেনদেন বাতিল করুন** → karon likhun. Lenden muchhe na; "বাতিল" hoye thake, baki thik hoye jay.
 - **Baki hisab mile na mone hole:** সেটিংস → **ব্যালেন্স যাচাই → যাচাই করুন** (internet lagbe). Gormil thakle dekhabe, thik korar option dibe.
-- **Customer er mobile number bodle geche:** customer page → **মোবাইল নম্বর বদলান** (internet lagbe). Purono hisab notun number e chole jay.
-- **Customer muchte chan:** customer page → nicher dike **কাস্টমার মুছুন** (shudhu owner).
-  - Kono lenden nei (bhul kore add hoyeche): **হ্যাঁ, পুরোপুরি মুছে ফেলুন** → customer ar tar prescription er chhobi muche jay (internet lagbe, fire ashe na).
-  - Lenden ache: hisab thik rakhte puropuri muche na. **লুকিয়ে রাখুন (আর্কাইভ)** chaple list theke sore jay; baki thakle "বাজারে মোট বাকি" te ar gona hoy na. Fire ante: কাস্টমার → **আর্কাইভ** filter → customer → **আর্কাইভ থেকে ফেরান**.
+- **Customer er mobile number bodle geche:** customer page → **এডিট** → **মোবাইল নম্বর** e notun number → **নম্বর বদলান** (ba nicher **মোবাইল নম্বর বদলান**). Internet lagbe. Sob lenden, baki ar chhobi notun number e chole jay; purono number "আর্কাইভ" e thake.
+- **Customer muchte chan:** customer page → nicher dike **কাস্টমার মুছুন** (shudhu owner, internet lagbe, fire ashe na).
+  - Kono lenden nei (bhul kore add hoyeche): **হ্যাঁ, পুরোপুরি মুছে ফেলুন**.
+  - Lenden ache: lal lekha porun → ghore **DELETE** likhun → **সব লেনদেনসহ মুছে ফেলুন**. Customer, tar **sob bill o joma**, baki ar chhobi muche jay; purono report o bodlay. Dorkar hole age **ব্যাকআপ** nin.
+  - Muchte na chaile **লুকিয়ে রাখুন (আর্কাইভ)**: list theke sore jay, hisab thake. Fire ante: কাস্টমার → **আর্কাইভ** filter → customer → **আর্কাইভ থেকে ফেরান**.
 
 ---
+
+## 5b. Launch checklist (ekbar)
+
+1. **Test er data muchhe din:** test customer gulo (jemon "Probal", "pp") → **কাস্টমার মুছুন** → **DELETE** → **সব লেনদেনসহ মুছে ফেলুন**.
+2. **SMS:** bulksmsbd panel → **Phone Book → IP White List → Disable** (OTP). Tarpor সেটিংস → SMS → **টেস্ট SMS পাঠান** → phone e ashle **টেস্ট মোড বন্ধ**. **SMS লগ** e "যায়নি" thakle **যায়নি এমন সব আবার পাঠান**.
+3. **SMS er dam:** সেটিংস → SMS → **প্রতি SMS-এর দাম** (jemon `0.35`).
+4. **Tagada er niyom:** সেটিংস → **তাগাদা** (৳ koto, koydin por por, kokhon).
+5. **Dokaner tottho:** সেটিংস → **দোকানের তথ্য** (nam, thikana, phone, SMS-e nam).
+6. **Protiti phone/PC:** **https://msallopathic.store** → login → **Install** → **PIN** chalu.
+7. **Staff:** সেটিংস → **স্টাফ** → account → staff ke link + login din.
+8. **Prothom backup:** সেটিংস → **ব্যাকআপ নিন** → Google Drive e rakhun.
+9. **Nirapotta:** chat e asha bulksmsbd API key ar Firebase key notun kore banan (§10).
 
 ## 6. Backup (proti soptahe)
 

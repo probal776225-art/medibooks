@@ -60,6 +60,7 @@ async function deliver(d: FsDoc, settings: ShopSettings, run: RunContext): Promi
   run.sendsLeft -= 1
   const r = await run.provider().send(to, text, item.unicode === true)
   if (r.ok) return { status: 'sent', lastError: '', providerRef: r.ref, retryAt: null }
+  console.warn(`sms ${d.id} not sent: ${r.error}`)
   // A failure the provider calls temporary goes back in the queue for a later try.
   if (r.retry && attempts < SMS_MAX_ATTEMPTS) {
     return { status: 'pending', lastError: r.error, providerRef: '', retryAt: run.now + RETRY_DELAY_MS * attempts }

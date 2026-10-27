@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ROUTES } from '../../app/routes'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { customerPath, ROUTES } from '../../app/routes'
 import { Icon } from '../../components/Icon'
 import { Button, buttonClass, Card, Toggle } from '../../components/ui'
 import { setCustomerFlags } from '../../data/repos/customers'
@@ -22,6 +22,7 @@ import { RemindDialog } from '../reminders/RemindDialog'
 export function CustomerDetailPage() {
   const t = useT()
   const f = useFormat()
+  const navigate = useNavigate()
   const { mobile = '' } = useParams()
   const customer = useDataStore((s) => s.byMobile.get(mobile))
   const status = useDataStore((s) => s.customersStatus)
@@ -63,9 +64,13 @@ export function CustomerDetailPage() {
           <CustomerForm
             mode="edit"
             customer={customer}
-            onSaved={() => {
+            onSaved={(saved) => {
               setEditing(false)
-              showToast('success', 'customer.saved')
+              if (saved === customer.mobile) showToast('success', 'customer.saved')
+              else {
+                showToast('success', 'mob.done')
+                navigate(customerPath(saved), { replace: true })
+              }
             }}
             onCancel={() => setEditing(false)}
           />
