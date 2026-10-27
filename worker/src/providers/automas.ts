@@ -1,6 +1,7 @@
 // Automas (sms.automas.com.bd) HTTP API — the owner's SMS account since 2026-10-27, non-masking sender id.
 // Send: POST https://api.automas.com.bd/smsapiv3 with apikey, sender, msisdn, smstext (+ type=8 / smsformat=8 for Unicode).
-// Balance: GET https://api.automas.com.bd/getbalance?apikey=… → {"response":"1234.50"}, or an error code ("104").
+// Balance: GET https://api.automas.com.bd/getbalancev3?apikey=… (the owner's panel link) → {"response":"1234.50"},
+// or an error code ("106").
 // Reply: {"response":[{"status":0,"id":296334,"msisdn":"01886888816"}]}. Status 0 = submitted; anything else is a code
 // below (a failed reply carries an id too). An IP whitelist in the panel must stay off: Workers have no fixed IP (108).
 import type { SendResult, SmsProvider } from './types'
@@ -51,7 +52,7 @@ export function parseSendReply(httpStatus: number, body: string): SendResult {
   return { ok: false, error: `HTTP ${httpStatus}: ${body.slice(0, 150)}`, retry: false }
 }
 
-/** {"response":"1234.50"} is the balance in taka; a bare known code ("104") is an error. */
+/** {"response":"1234.50"} is the balance in taka; a bare known code ("106") is an error. */
 export function parseBalanceReply(body: string): number {
   let value: unknown
   try {
@@ -91,7 +92,7 @@ export function automas(apiKey: string, senderId: string): SmsProvider {
       return parseSendReply(res.status, await res.text())
     },
     async balance() {
-      const res = await fetch(`${BASE}/getbalance?${new URLSearchParams({ apikey: apiKey })}`, {
+      const res = await fetch(`${BASE}/getbalancev3?${new URLSearchParams({ apikey: apiKey })}`, {
         signal: AbortSignal.timeout(TIMEOUT_MS),
       })
       return parseBalanceReply(await res.text())

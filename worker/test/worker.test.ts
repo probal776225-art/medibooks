@@ -50,6 +50,7 @@ describe('Automas adapter', () => {
   it('reads the balance, and an error code as an error', () => {
     expect(parseBalanceReply('{"response":"1234.50"}')).toBe(1234.5)
     expect(parseBalanceReply('{"response":"0.00"}')).toBe(0)
+    expect(() => parseBalanceReply('{"response":"106"}')).toThrow('106 Incorrect API key') // live reply to a wrong key
     expect(() => parseBalanceReply('{"response":"104"}')).toThrow('104 Invalid user')
     expect(() => parseBalanceReply('<html>')).toThrow('balance')
   })
