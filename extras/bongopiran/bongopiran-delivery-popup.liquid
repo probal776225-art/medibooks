@@ -1,4 +1,4 @@
-<!-- BongoPiran — "মাত্র ১১ টাকায় হোম ডেলিভারি" popup (হালকা সংস্করণ) -->
+<!-- BongoPiran — "মাত্র ১১ টাকায় হোম ডেলিভারি" popup (Shopify Custom Liquid) -->
 <div id="bp-dlv-popup" hidden>
   <div class="bp-card" role="dialog" aria-modal="true" aria-labelledby="bp-dlv-title" aria-describedby="bp-dlv-desc">
     <span class="bp-sparkle bp-s1" aria-hidden="true">✦</span>
@@ -9,8 +9,10 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
 
-    <!-- ⬇ src-এ আপনার সাইটের লোগোর লিংক দিন (popup খুললে তবেই লোড হবে) -->
-    <img class="bp-logo bp-anim" style="--d:.10s" src="LOGO_URL_HERE" alt="BongoPiran" width="560" height="103" loading="lazy" decoding="async">
+    {%- comment -%} লোগো: থিমের লোগো নিজে থেকেই আসে (popup খুললে তবেই লোড হয়) {%- endcomment -%}
+    {%- if settings.logo != blank -%}
+    <img class="bp-logo bp-anim" style="--d:.10s" src="{{ settings.logo | image_url: width: 400 }}" alt="BongoPiran" width="400" height="{{ 400 | divided_by: settings.logo.aspect_ratio | round }}" loading="lazy" decoding="async">
+    {%- endif -%}
 
     <span class="bp-label bp-anim" style="--d:.18s">নভেম্বরের বিশেষ অফার</span>
 
@@ -185,7 +187,7 @@
   var bnDigits = '০১২৩৪৫৬৭৮৯';
   var prevFocus, prevOverflow, timerId;
 
-  logo.addEventListener('error', function () { logo.remove(); });
+  if (logo) logo.addEventListener('error', function () { logo.remove(); });
 
   function bn(n) {
     return String(n).padStart(2, '0').replace(/\d/g, function (d) { return bnDigits[d]; });
