@@ -1,0 +1,277 @@
+<!-- BongoPiran — "মাত্র ১১ টাকায় হোম ডেলিভারি" popup (হালকা সংস্করণ) -->
+<div id="bp-dlv-popup" hidden>
+  <div class="bp-card" role="dialog" aria-modal="true" aria-labelledby="bp-dlv-title" aria-describedby="bp-dlv-desc">
+    <span class="bp-sparkle bp-s1" aria-hidden="true">✦</span>
+    <span class="bp-sparkle bp-s2" aria-hidden="true">✦</span>
+    <span class="bp-sparkle bp-s3" aria-hidden="true">✦</span>
+
+    <button type="button" class="bp-close" aria-label="পপআপ বন্ধ করুন">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+
+    <!-- ⬇ src-এ আপনার সাইটের লোগোর লিংক দিন (popup খুললে তবেই লোড হবে) -->
+    <img class="bp-logo bp-anim" style="--d:.10s" src="LOGO_URL_HERE" alt="BongoPiran" width="560" height="103" loading="lazy" decoding="async">
+
+    <span class="bp-label bp-anim" style="--d:.18s">নভেম্বরের বিশেষ অফার</span>
+
+    <h2 id="bp-dlv-title" class="bp-anim" style="--d:.26s">
+      <span class="bp-amount">মাত্র ১১ টাকায়</span>
+      <span class="bp-sub">হোম ডেলিভারি!</span>
+    </h2>
+
+    <div class="bp-divider bp-anim" style="--d:.32s" aria-hidden="true">
+      <span></span>
+      <svg class="bp-truck" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M1.5 5.5h11.5v10.5H1.5zM13 9h4.2l3.3 3.6V16H13"/><circle cx="5.5" cy="17" r="2" fill="#fffaf2"/><circle cx="16.8" cy="17" r="2" fill="#fffaf2"/></svg>
+      <span></span>
+    </div>
+
+    <p id="bp-dlv-desc" class="bp-anim" style="--d:.38s">
+      ঢাকা হোক বা দেশের যেকোনো প্রান্ত — <strong>সারা বাংলাদেশে</strong>
+      হোম ডেলিভারি চার্জ মাত্র <strong>১১ টাকা</strong>।
+    </p>
+
+    <div class="bp-timer bp-anim" style="--d:.46s" aria-label="অফার শেষ হতে বাকি সময়">
+      <div><b data-unit="d">০০</b><small>দিন</small></div>
+      <div><b data-unit="h">০০</b><small>ঘণ্টা</small></div>
+      <div><b data-unit="m">০০</b><small>মিনিট</small></div>
+      <div><b data-unit="s">০০</b><small>সেকেন্ড</small></div>
+    </div>
+
+    <button type="button" class="bp-cta bp-anim" style="--d:.54s">এখনই অর্ডার করুন</button>
+  </div>
+</div>
+
+<style>
+#bp-dlv-popup[hidden]{display:none!important}
+#bp-dlv-popup{
+  --m:#682536;--md:#4e1a28;--g:#c9a35c;--cr:#fffaf2;--ink:#352724;--mu:#7a6660;
+  --e:cubic-bezier(.16,1,.3,1);
+  position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;
+  box-sizing:border-box;padding:20px;background:rgba(28,14,18,.55);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  font-family:'Hind Siliguri','Noto Sans Bengali','Kohinoor Bangla','Nirmala UI',sans-serif;
+  opacity:0;transition:opacity .35s ease
+}
+#bp-dlv-popup.is-open{opacity:1}
+#bp-dlv-popup *,#bp-dlv-popup *::before,#bp-dlv-popup *::after{box-sizing:border-box}
+
+/* Card */
+#bp-dlv-popup .bp-card{
+  position:relative;width:100%;max-width:420px;max-height:88vh;overflow-y:auto;
+  padding:44px 28px 30px;border:1px solid transparent;border-radius:24px;
+  background:
+    radial-gradient(120% 60% at 50% 0%,rgba(230,207,159,.45),transparent 60%) padding-box,
+    linear-gradient(180deg,#fffdf9,var(--cr)) padding-box,
+    linear-gradient(160deg,#e9d3a4,#c9a35c 40%,#f3e4c3 70%,#b8914a) border-box;
+  color:var(--ink);text-align:center;
+  box-shadow:inset 0 0 0 7px rgba(255,250,242,.9),inset 0 0 0 8px rgba(201,163,92,.28),
+    0 2px 6px rgba(40,15,20,.08),0 30px 70px -10px rgba(40,15,20,.45);
+  opacity:0;transform:translateY(28px) scale(.94);
+  transition:opacity .45s var(--e),transform .6s var(--e)
+}
+#bp-dlv-popup.is-open .bp-card{opacity:1;transform:none}
+#bp-dlv-popup .bp-anim{opacity:0;transform:translateY(12px);transition:opacity .5s var(--e),transform .6s var(--e)}
+#bp-dlv-popup.is-open .bp-anim{opacity:1;transform:none;transition-delay:var(--d,0s)}
+
+/* Sparkles */
+#bp-dlv-popup .bp-sparkle{position:absolute;color:var(--g);line-height:1;pointer-events:none;animation:bpTwinkle 3.2s ease-in-out infinite}
+#bp-dlv-popup .bp-s1{top:26px;left:30px;font-size:16px}
+#bp-dlv-popup .bp-s2{top:64px;left:58px;font-size:9px;animation-delay:1.1s}
+#bp-dlv-popup .bp-s3{top:112px;right:34px;font-size:12px;animation-delay:2s}
+@keyframes bpTwinkle{0%,100%{opacity:.25;transform:scale(.7) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(25deg)}}
+
+/* Close */
+#bp-dlv-popup .bp-close{
+  position:absolute;top:14px;right:14px;z-index:2;display:flex;align-items:center;justify-content:center;
+  width:44px;height:44px;padding:0;border:1px solid rgba(104,37,54,.12);border-radius:50%;
+  background:rgba(255,255,255,.75);color:var(--m);cursor:pointer;appearance:none;
+  transition:transform .35s var(--e),background .2s ease,color .2s ease
+}
+#bp-dlv-popup .bp-close:hover{background:var(--m);color:#fff;transform:rotate(90deg)}
+#bp-dlv-popup .bp-close:focus-visible,#bp-dlv-popup .bp-cta:focus-visible{outline:2px solid var(--m);outline-offset:3px}
+
+/* Text */
+#bp-dlv-popup .bp-logo{display:block;width:200px;max-width:62%;height:auto;margin:0 auto}
+#bp-dlv-popup .bp-label{
+  display:inline-block;margin:16px 0 8px;padding:5px 14px;border:1px solid rgba(201,163,92,.55);
+  border-radius:999px;background:rgba(230,207,159,.22);color:#8a5a2b;font-size:14px;font-weight:500;line-height:1.5
+}
+#bp-dlv-popup h2{margin:4px 0 0;color:var(--m);font-family:inherit;font-weight:700;line-height:1.3}
+#bp-dlv-popup .bp-amount{
+  display:inline-block;padding:2px 0;font-size:clamp(34px,9.5vw,46px);
+  background:linear-gradient(100deg,var(--m) 0%,var(--m) 40%,var(--g) 50%,var(--m) 60%,var(--m) 100%);
+  background-size:250% 100%;background-position:100% 0;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:bpShimmer 4.5s ease-in-out 1.2s infinite
+}
+@keyframes bpShimmer{0%{background-position:100% 0}45%,100%{background-position:0 0}}
+#bp-dlv-popup .bp-sub{display:block;font-size:clamp(24px,6.5vw,30px)}
+
+#bp-dlv-popup .bp-divider{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px auto 12px;max-width:200px}
+#bp-dlv-popup .bp-divider span{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--g))}
+#bp-dlv-popup .bp-divider span:last-child{background:linear-gradient(90deg,var(--g),transparent)}
+#bp-dlv-popup .bp-truck{flex:none;color:var(--g);animation:bpDrive 2.4s ease-in-out infinite}
+@keyframes bpDrive{0%,100%{transform:translateX(-3px)}50%{transform:translateX(3px)}}
+
+#bp-dlv-desc{margin:0;color:var(--ink);font-size:16.5px;font-weight:500;line-height:1.85}
+#bp-dlv-desc strong{color:var(--m);font-weight:700;white-space:nowrap}
+
+/* Countdown */
+#bp-dlv-popup .bp-timer{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:22px 0}
+#bp-dlv-popup .bp-timer div{
+  padding:10px 4px 8px;border:1px solid #efe1c6;border-radius:14px;background:#fff;
+  box-shadow:0 1px 0 rgba(201,163,92,.25),0 6px 14px -8px rgba(104,37,54,.25)
+}
+#bp-dlv-popup .bp-timer b{display:block;color:var(--m);font-size:22px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+#bp-dlv-popup .bp-timer small{display:block;margin-top:2px;color:var(--mu);font-size:12px}
+
+/* CTA */
+#bp-dlv-popup .bp-cta{
+  position:relative;overflow:hidden;width:100%;min-height:52px;padding:12px 20px;border:0;border-radius:14px;
+  background:linear-gradient(135deg,#7a2c40,var(--m) 50%,var(--md));color:#fff;
+  font-family:inherit;font-size:17px;font-weight:700;letter-spacing:.2px;cursor:pointer;appearance:none;
+  box-shadow:0 10px 22px -10px rgba(104,37,54,.8);transition:transform .25s var(--e),box-shadow .25s ease
+}
+#bp-dlv-popup .bp-cta::after{
+  content:'';position:absolute;top:0;left:0;width:40%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);
+  transform:translateX(-150%) skewX(-20deg);animation:bpShine 3.8s ease-in-out 1.6s infinite
+}
+#bp-dlv-popup .bp-cta:hover{transform:translateY(-2px);box-shadow:0 16px 28px -12px rgba(104,37,54,.9)}
+#bp-dlv-popup .bp-cta:active{transform:translateY(0) scale(.99)}
+@keyframes bpShine{0%{transform:translateX(-150%) skewX(-20deg)}35%,100%{transform:translateX(330%) skewX(-20deg)}}
+
+@media (max-width:480px){
+  #bp-dlv-popup{padding:16px}
+  #bp-dlv-popup .bp-card{padding:42px 18px 22px;border-radius:20px}
+  #bp-dlv-desc{font-size:15.5px}
+  #bp-dlv-popup .bp-timer{gap:6px;margin:18px 0}
+  #bp-dlv-popup .bp-timer b{font-size:19px}
+}
+@media (prefers-reduced-motion:reduce){
+  #bp-dlv-popup,#bp-dlv-popup *,#bp-dlv-popup *::before,#bp-dlv-popup *::after{animation:none!important;transition:none!important}
+}
+</style>
+
+<script>
+(function () {
+  /* ===== শুধু এই ৩টা লাইন বদলাতে হতে পারে ===== */
+  var OFFER_ENDS = new Date('2026-12-01T00:00:00+06:00'); // ৩০ নভেম্বর রাত ১২টায় অফার শেষ
+  var STORAGE_KEY = 'bp-nov2026-delivery11-dismissed';      // নতুন অফারে নাম বদলালে আবার সবাই দেখবে
+  var FONT_URL = 'https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@500;700&display=swap';
+  /* ============================================ */
+
+  var popup = document.getElementById('bp-dlv-popup');
+  if (!popup || popup.dataset.ready) return;
+  popup.dataset.ready = '1';
+
+  function seen() {
+    try { return sessionStorage.getItem(STORAGE_KEY); } catch (e) { return null; }
+  }
+
+  // অফার শেষ বা এই ভিজিটে আগেই বন্ধ করেছে — কিছুই লোড হবে না
+  if (Date.now() >= OFFER_ENDS || seen()) {
+    popup.remove();
+    return;
+  }
+
+  var closeBtn = popup.querySelector('.bp-close');
+  var ctaBtn = popup.querySelector('.bp-cta');
+  var logo = popup.querySelector('.bp-logo');
+  var units = {};
+  popup.querySelectorAll('[data-unit]').forEach(function (el) { units[el.dataset.unit] = el; });
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var bnDigits = '০১২৩৪৫৬৭৮৯';
+  var prevFocus, prevOverflow, timerId;
+
+  logo.addEventListener('error', function () { logo.remove(); });
+
+  function bn(n) {
+    return String(n).padStart(2, '0').replace(/\d/g, function (d) { return bnDigits[d]; });
+  }
+
+  function tick() {
+    var diff = OFFER_ENDS - Date.now();
+    if (diff <= 0) { close(); return; }
+    var v = {
+      d: Math.floor(diff / 86400000),
+      h: Math.floor(diff / 3600000) % 24,
+      m: Math.floor(diff / 60000) % 60,
+      s: Math.floor(diff / 1000) % 60
+    };
+    for (var k in v) {
+      var el = units[k], text = bn(v[k]);
+      if (el.textContent !== text) {
+        el.textContent = text;
+        if (!reduceMotion && el.animate) {
+          el.animate(
+            [{ transform: 'translateY(-4px)', opacity: 0.4 }, { transform: 'none', opacity: 1 }],
+            { duration: 400, easing: 'cubic-bezier(.16,1,.3,1)' }
+          );
+        }
+      }
+    }
+  }
+
+  function onKey(e) {
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      (document.activeElement === closeBtn ? ctaBtn : closeBtn).focus();
+    }
+  }
+
+  function close() {
+    if (!popup.classList.contains('is-open')) return;
+    popup.classList.remove('is-open');
+    clearInterval(timerId);
+    document.removeEventListener('keydown', onKey);
+    try { sessionStorage.setItem(STORAGE_KEY, '1'); } catch (e) {}
+    setTimeout(function () {
+      popup.remove();
+      document.body.style.overflow = prevOverflow;
+      if (prevFocus && prevFocus.isConnected && prevFocus.focus) prevFocus.focus({ preventScroll: true });
+    }, reduceMotion ? 0 : 380);
+  }
+
+  function open() {
+    if (Date.now() >= OFFER_ENDS) return;
+
+    // ফন্ট শুধু popup দেখালে তবেই, আর সাইটে আগে থেকে থাকলে আর না
+    if (FONT_URL && !document.querySelector('link[href*="Hind+Siliguri"]')) {
+      var font = document.createElement('link');
+      font.rel = 'stylesheet';
+      font.href = FONT_URL;
+      font.media = 'print';
+      font.onload = function () { font.media = 'all'; };
+      document.head.appendChild(font);
+    }
+
+    prevFocus = document.activeElement;
+    prevOverflow = document.body.style.overflow;
+
+    tick();
+    timerId = setInterval(tick, 1000);
+
+    popup.hidden = false;
+    void popup.offsetWidth; // শুরুর অবস্থা আঁকতে দিন, তারপর animation
+    popup.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', onKey);
+    closeBtn.focus({ preventScroll: true });
+  }
+
+  closeBtn.addEventListener('click', close);
+  ctaBtn.addEventListener('click', close);
+  popup.addEventListener('click', function (e) { if (e.target === popup) close(); });
+
+  // পেজ পুরো লোড হওয়ার পরে popup — সাইটের লোডিং স্পিডে কোনো প্রভাব পড়বে না
+  function whenIdle() {
+    if ('requestIdleCallback' in window) requestIdleCallback(open, { timeout: 1500 });
+    else setTimeout(open, 200);
+  }
+  if (document.readyState === 'complete') whenIdle();
+  else window.addEventListener('load', whenIdle, { once: true });
+})();
+</script>
