@@ -7,6 +7,7 @@
 #bp-sale-popup.is-open{opacity:1}
 #bp-sale-popup,#bp-sale-popup *{box-sizing:border-box}
 #bp-sale-popup [hidden]{display:none!important}
+#bp-sale-popup svg text{letter-spacing:0;word-spacing:0;text-transform:none}
 #bp-sale-popup .bp-card{position:relative;width:100%;max-width:440px;max-height:92vh;overflow-y:auto;overflow-x:hidden;padding:16px 26px 14px;border:1.5px solid transparent;border-radius:26px;text-align:center;color:var(--ink);background:radial-gradient(70% 34% at 50% 30%,rgba(201,163,92,.24),transparent 70%) padding-box,radial-gradient(rgba(104,37,54,.07) 1px,transparent 1.5px) 0 0/16px 16px padding-box,linear-gradient(180deg,#fffdf9,#fff5e8) padding-box,linear-gradient(160deg,#e9d3a4,#c9a35c 40%,#f3e4c3 70%,#b8914a) border-box;box-shadow:0 2px 6px rgba(40,15,20,.08),0 34px 80px -12px rgba(40,15,20,.55);opacity:0;transform:translateY(30px) scale(.94);transition:opacity .45s var(--e),transform .6s var(--e)}
 #bp-sale-popup.is-open .bp-card{opacity:1;transform:none}
 #bp-sale-popup .bp-anim{opacity:0;transform:translateY(12px);transition:opacity .5s var(--e),transform .6s var(--e)}
@@ -141,7 +142,7 @@
       <i class="bp-shad" style="left:14px;width:78px"></i><i class="bp-shad" style="left:84px;width:100px"></i><i class="bp-shad" style="right:6px;width:78px"></i>
       <span class="bp-bag bp-b1"><span class="bp-bag-in"><svg viewBox="0 0 80 92" style="--bf:#e0b45e;--bs:#b8914a;--bi:#7d5f27;--bh:#682536"><use href="#bpBag"/><rect x="8" y="62" width="52" height="5" fill="#682536" fill-opacity=".85"/></svg></span></span>
       <span class="bp-bag bp-b3"><span class="bp-bag-in"><svg viewBox="0 0 80 92" style="--bf:#fff8ec;--bs:#e3d2b6;--bi:#c9ad80;--bh:#a22f30"><use href="#bpBag"/><path d="M34 66c-6-4.6-10-7.6-10-11.4a4.6 4.6 0 0 1 10-1.6 4.6 4.6 0 0 1 10 1.6c0 3.8-4 6.8-10 11.4z" fill="#e23b44"/></svg></span></span>
-      <span class="bp-bag bp-b2"><span class="bp-bag-in"><svg viewBox="0 0 80 92" style="--bf:#a8394a;--bs:#6a2030;--bi:#4e1a28;--bh:#c9a35c"><use href="#bpBag"/><rect x="8" y="57" width="52" height="4" fill="#c9a35c"/><text x="34" y="76" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="9.5" font-weight="700" fill="#fff">BongoPiran</text></svg>
+      <span class="bp-bag bp-b2"><span class="bp-bag-in"><svg viewBox="0 0 80 92" style="--bf:#a8394a;--bs:#6a2030;--bi:#4e1a28;--bh:#c9a35c"><use href="#bpBag"/><rect x="8" y="57" width="52" height="4" fill="#c9a35c"/><text x="34" y="76" text-anchor="middle" textLength="46" lengthAdjust="spacingAndGlyphs" font-family="Georgia,'Times New Roman',serif" font-size="9.5" font-weight="700" fill="#fff">BongoPiran</text></svg>
         <span class="bp-tag"><svg viewBox="0 0 38 54"><path d="M19 0v9" stroke="#8a6a2f" stroke-width="1.2"/><path d="M7 14l12-8 12 8v34a4 4 0 0 1-4 4H11a4 4 0 0 1-4-4z" fill="#e23b44"/><path d="M7 14l12-8 12 8v4l-12-8-12 8z" fill="#fff" fill-opacity=".2"/><circle cx="19" cy="13" r="2.4" fill="#fffaf2"/><text x="19" y="33" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">৬০%</text><text x="19" y="45" text-anchor="middle" font-size="9.5" font-weight="700" fill="#ffe36e">ছাড়</text></svg></span>
       </span></span>
     </span>
@@ -150,8 +151,7 @@
   <div class="bp-ribbon-wrap bp-anim" style="--d:.4s">
     <div class="bp-ribbon">
       <span class="bp-clock" aria-hidden="true"><i class="bp-hh"></i><i class="bp-mm"></i></span>
-      <span class="bp-r-days">আর মাত্র <b class="bp-dd">৪</b> দিন বাকি!</span>
-      <span class="bp-r-time" hidden>আর মাত্র <b class="bp-cd">০০:০০:০০</b> বাকি</span>
+      <span>আর মাত্র <b class="bp-n">৩</b> <span class="bp-u">দিন</span> বাকি!</span>
     </div>
   </div>
 
@@ -187,7 +187,6 @@
 
   function remember() { if (!preview) { try { sessionStorage.setItem(STORAGE_KEY, '1'); } catch (e) {} } }
   function bnDigits(s) { return String(s).replace(/\d/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; }); }
-  function two(n) { return bnDigits(String(n).padStart(2, '0')); }
 
   function show() {
     if (document.getElementById('bp-sale-popup')) return;
@@ -207,10 +206,8 @@
     var cta = popup.querySelector('.bp-cta');
     var later = popup.querySelector('.bp-later');
     var logo = popup.querySelector('.bp-logo');
-    var daysBox = popup.querySelector('.bp-r-days');
-    var timeBox = popup.querySelector('.bp-r-time');
-    var dd = popup.querySelector('.bp-dd');
-    var cd = popup.querySelector('.bp-cd');
+    var numEl = popup.querySelector('.bp-n');
+    var unitEl = popup.querySelector('.bp-u');
     var focusables = [closeBtn, cta, later];
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var prevFocus = document.activeElement;
@@ -219,17 +216,17 @@
 
     if (logo) logo.addEventListener('error', function () { logo.remove(); });
 
-    // আসল সময় গুনে: ১ দিনের বেশি বাকি থাকলে "আর মাত্র ৩ দিন বাকি!", শেষ দিনে ঘণ্টা:মিনিট:সেকেন্ড
+    // আসল সময় গুনে: ৩ দিন → ২ দিন → ১ দিন → শেষ দিনে ২৩ ঘণ্টা, ২২ ঘণ্টা… → শেষ ঘণ্টায় মিনিট
     function tick() {
       var diff = OFFER_ENDS - Date.now();
       if (diff <= 0) { if (!preview) close(); return; }
-      var lastDay = diff < 86400000;
-      if (daysBox.hidden !== lastDay) { daysBox.hidden = lastDay; timeBox.hidden = !lastDay; }
-      var text = lastDay
-        ? two(Math.floor(diff / 3600000)) + ':' + two(Math.floor(diff / 60000) % 60) + ':' + two(Math.floor(diff / 1000) % 60)
-        : bnDigits(Math.ceil(diff / 86400000));
-      var el = lastDay ? cd : dd;
-      if (el.textContent !== text) el.textContent = text;
+      var n, unit;
+      if (diff >= 86400000) { n = Math.floor(diff / 86400000); unit = 'দিন'; }
+      else if (diff >= 3600000) { n = Math.floor(diff / 3600000); unit = 'ঘণ্টা'; }
+      else { n = Math.max(1, Math.ceil(diff / 60000)); unit = 'মিনিট'; }
+      var text = bnDigits(n);
+      if (numEl.textContent !== text) numEl.textContent = text;
+      if (unitEl.textContent !== unit) unitEl.textContent = unit;
     }
     tick();
     timerId = setInterval(tick, 1000);
