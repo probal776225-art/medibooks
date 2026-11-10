@@ -1,0 +1,271 @@
+{%- comment -%} BongoPiran — ১১–১৪ নভেম্বর "৬০% পর্যন্ত ছাড়" popup (Shopify Custom Liquid, হালকা সংস্করণ). কার্ট পেজে দেখায় না। {%- endcomment -%}
+{%- unless template.name == 'cart' -%}
+<template id="bp-sale-tpl">
+<div id="bp-sale-popup">
+<style>
+#bp-sale-popup{--m:#682536;--md:#4e1a28;--r:#a22f30;--g:#c9a35c;--ink:#2b1f1d;--mu:#7a6660;--e:cubic-bezier(.16,1,.3,1);position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(28,14,18,.6);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);font-family:'Hind Siliguri','Noto Sans Bengali','Kohinoor Bangla','Nirmala UI',sans-serif;opacity:0;transition:opacity .35s ease}
+#bp-sale-popup.is-open{opacity:1}
+#bp-sale-popup,#bp-sale-popup *{box-sizing:border-box}
+#bp-sale-popup [hidden]{display:none!important}
+#bp-sale-popup .bp-card{position:relative;width:100%;max-width:440px;max-height:92vh;overflow-y:auto;overflow-x:hidden;padding:16px 26px 14px;border:1.5px solid transparent;border-radius:26px;text-align:center;color:var(--ink);background:radial-gradient(70% 34% at 50% 30%,rgba(201,163,92,.24),transparent 70%) padding-box,radial-gradient(rgba(104,37,54,.07) 1px,transparent 1.5px) 0 0/16px 16px padding-box,linear-gradient(180deg,#fffdf9,#fff5e8) padding-box,linear-gradient(160deg,#e9d3a4,#c9a35c 40%,#f3e4c3 70%,#b8914a) border-box;box-shadow:0 2px 6px rgba(40,15,20,.08),0 34px 80px -12px rgba(40,15,20,.55);opacity:0;transform:translateY(30px) scale(.94);transition:opacity .45s var(--e),transform .6s var(--e)}
+#bp-sale-popup.is-open .bp-card{opacity:1;transform:none}
+#bp-sale-popup .bp-anim{opacity:0;transform:translateY(12px);transition:opacity .5s var(--e),transform .6s var(--e)}
+#bp-sale-popup.is-open .bp-anim{opacity:1;transform:none;transition-delay:var(--d,0s)}
+#bp-sale-popup .bp-head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+#bp-sale-popup .bp-logo{display:block;width:auto;height:28px;max-width:160px;object-fit:contain}
+#bp-sale-popup .bp-brand{font:700 20px Georgia,serif;color:var(--r)}
+#bp-sale-popup .bp-close{flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin-right:-8px;padding:0;border:1px solid rgba(104,37,54,.14);border-radius:50%;background:rgba(255,255,255,.8);color:var(--m);cursor:pointer;appearance:none;transition:transform .35s var(--e),background .2s,color .2s}
+#bp-sale-popup .bp-close:hover{background:var(--m);color:#fff;transform:rotate(90deg)}
+#bp-sale-popup .bp-close:focus-visible,#bp-sale-popup .bp-cta:focus-visible,#bp-sale-popup .bp-later:focus-visible{outline:2px solid var(--m);outline-offset:3px}
+#bp-sale-popup h2{margin:6px 0 0;font-family:inherit;font-size:26px;font-weight:700;line-height:1.3;color:var(--ink)}
+#bp-sale-popup h2 span{display:block;font-size:32px;color:var(--r)}
+#bp-sale-popup .bp-price{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:2px}
+#bp-sale-popup .bp-numw{position:relative;font-size:88px;font-weight:700;line-height:1.05;letter-spacing:-2px}
+#bp-sale-popup .bp-num{display:block;padding:0 2px;background:linear-gradient(100deg,var(--r) 0%,var(--m) 38%,#e0b45e 50%,var(--m) 62%,var(--r) 100%);background-size:260% 100%;background-position:100% 0;-webkit-background-clip:text;background-clip:text;color:transparent}
+#bp-sale-popup .bp-glint{position:absolute;top:0;bottom:0;left:0;width:60%;overflow:hidden;pointer-events:none;transform:translateX(-100%);-webkit-mask-image:linear-gradient(100deg,transparent,#000 50%,transparent);mask-image:linear-gradient(100deg,transparent,#000 50%,transparent)}
+#bp-sale-popup .bp-glint b{display:block;width:166.67%;padding:0 2px;font-weight:700;white-space:nowrap;color:#e0b45e;transform:translateX(60%)}
+#bp-sale-popup.is-open .bp-glint{animation:bpGlint 4.5s ease-in-out 1.4s infinite both}
+#bp-sale-popup.is-open .bp-glint b{animation:bpGlintIn 4.5s ease-in-out 1.4s infinite both}
+@keyframes bpGlint{0%{transform:translateX(-100%)}45%,100%{transform:translateX(166.67%)}}
+@keyframes bpGlintIn{0%{transform:translateX(60%)}45%,100%{transform:translateX(-100%)}}
+#bp-sale-popup .bp-post{display:flex;flex-direction:column;align-items:flex-start;line-height:1.15;text-align:left}
+#bp-sale-popup .bp-post b{font-size:28px;color:var(--m)}
+#bp-sale-popup .bp-post small{font-size:16px;font-weight:500}
+#bp-sale-popup .bp-scene{position:relative;height:150px;margin:-6px -16px 0;overflow:hidden}
+#bp-sale-popup .bp-scene i,#bp-sale-popup .bp-scene span{display:block;position:absolute}
+#bp-sale-popup .bp-defs{position:absolute;width:0;height:0;overflow:hidden}
+#bp-sale-popup .bp-rays{left:50%;bottom:-104px;width:300px;height:300px;margin-left:-150px;border-radius:50%;background:repeating-conic-gradient(rgba(224,180,94,.28) 0 8deg,transparent 8deg 16deg);-webkit-mask-image:radial-gradient(closest-side,#000 25%,transparent);mask-image:radial-gradient(closest-side,#000 25%,transparent)}
+#bp-sale-popup .bp-spark{color:var(--g);line-height:1;opacity:.3}
+#bp-sale-popup .bp-conf{inset:0}
+#bp-sale-popup .bp-conf i{top:0;width:7px;height:11px;border-radius:2px;opacity:0}
+#bp-sale-popup .bp-conf i:nth-child(3n){width:8px;height:8px;border-radius:50%}
+#bp-sale-popup .bp-bags{left:50%;bottom:4px;width:260px;height:132px;margin-left:-130px;transform-origin:50% 100%}
+#bp-sale-popup .bp-shad{bottom:0;height:10px;border-radius:50%;background:radial-gradient(closest-side,rgba(60,20,30,.3),transparent)}
+#bp-sale-popup .bp-bag{bottom:4px}
+#bp-sale-popup .bp-bag-in{inset:0}
+#bp-sale-popup .bp-bag svg{display:block;width:100%;height:100%;overflow:visible}
+#bp-sale-popup .bp-b1{left:8px;width:80px;height:92px}
+#bp-sale-popup .bp-b3{right:8px;width:80px;height:92px}
+#bp-sale-popup .bp-b2{left:50%;width:104px;height:120px;margin-left:-52px}
+#bp-sale-popup .bp-tag{left:57.5%;top:13%;width:38px;height:54px;margin-left:-19px;transform-origin:50% 0;transform:rotate(6deg)}
+#bp-sale-popup .bp-tag svg{display:block;width:100%;height:100%}
+#bp-sale-popup.is-open .bp-rays{animation:bpSpin 40s linear infinite}
+#bp-sale-popup.is-open .bp-spark{animation:bpTwinkle 3.2s ease-in-out infinite}
+#bp-sale-popup.is-open .bp-conf i{animation:bpFall 3s linear infinite}
+#bp-sale-popup.is-open .bp-bag{animation:bpDrop .9s cubic-bezier(.3,1.45,.5,1) .55s both}
+#bp-sale-popup.is-open .bp-b2{animation-delay:.7s}
+#bp-sale-popup.is-open .bp-b3{animation-delay:.85s}
+#bp-sale-popup.is-open .bp-bag-in{animation:bpBagHop 4.8s ease-in-out 2s infinite both}
+#bp-sale-popup.is-open .bp-b2 .bp-bag-in{animation-delay:2.2s}
+#bp-sale-popup.is-open .bp-b3 .bp-bag-in{animation-delay:2.4s}
+#bp-sale-popup.is-open .bp-tag{animation:bpSwing 1.6s ease-in-out infinite alternate}
+@keyframes bpSpin{to{transform:rotate(360deg)}}
+@keyframes bpTwinkle{0%,100%{opacity:.25;transform:scale(.7) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(25deg)}}
+@keyframes bpFall{0%{opacity:0;transform:translateY(-14px) rotate(0)}10%,80%{opacity:.9}100%{opacity:0;transform:translate(var(--dx,10px),150px) rotate(var(--rt,320deg))}}
+@keyframes bpDrop{0%{opacity:0;transform:translateY(-150px)}40%{opacity:1}100%{opacity:1;transform:none}}
+@keyframes bpBagHop{0%,72%{transform:none}78%{transform:translateY(-12px) rotate(-3deg)}84%{transform:none}88%{transform:translateY(-4px)}92%,100%{transform:none}}
+@keyframes bpSwing{0%{transform:rotate(10deg)}100%{transform:rotate(-10deg)}}
+#bp-sale-popup .bp-ribbon-wrap{margin:12px 0 14px}
+#bp-sale-popup .bp-ribbon{display:inline-flex;align-items:center;gap:10px;padding:7px 18px 7px 9px;border-radius:9px;background:linear-gradient(180deg,#ffe36e,#ffcd29);color:#3d1420;font-size:19px;font-weight:700;line-height:1.35;transform:rotate(-2.5deg);box-shadow:0 4px 0 #d9a300,0 14px 22px -10px rgba(60,20,30,.55)}
+#bp-sale-popup .bp-ribbon b{font-variant-numeric:tabular-nums;color:var(--r)}
+#bp-sale-popup .bp-clock{position:relative;flex:none;width:30px;height:30px;border-radius:50%;background:#fff;border:3px solid var(--m)}
+#bp-sale-popup .bp-clock::after{content:'';position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;background:var(--m)}
+#bp-sale-popup .bp-clock i{position:absolute;left:50%;bottom:50%;width:2.6px;margin-left:-1.3px;border-radius:2px;background:var(--m);transform-origin:50% 100%}
+#bp-sale-popup .bp-clock .bp-hh{height:6.5px;transform:rotate(-60deg)}
+#bp-sale-popup .bp-clock .bp-mm{height:9.5px;background:#e23b44}
+#bp-sale-popup.is-open .bp-mm{animation:bpTick 6s steps(12) infinite}
+@keyframes bpTick{to{transform:rotate(360deg)}}
+#bp-sale-popup .bp-cta{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:54px;padding:12px 20px;border:0;border-radius:14px;color:#fff;font-family:inherit;font-size:18px;font-weight:700;line-height:inherit;cursor:pointer;appearance:none;background:linear-gradient(135deg,#b23a45,var(--r) 40%,var(--md));box-shadow:0 12px 24px -10px rgba(162,47,48,.75);transition:transform .25s var(--e),box-shadow .25s}
+#bp-sale-popup .bp-cta:hover{transform:translateY(-2px);box-shadow:0 18px 30px -12px rgba(162,47,48,.85)}
+#bp-sale-popup .bp-cta::after{content:'';position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.32),transparent);transform:translateX(-150%) skewX(-20deg)}
+#bp-sale-popup.is-open .bp-cta::after{animation:bpShine 3.8s ease-in-out 1.8s infinite}
+#bp-sale-popup.is-open .bp-cta svg{animation:bpNudge 1.2s ease-in-out infinite}
+@keyframes bpShine{0%{transform:translateX(-150%) skewX(-20deg)}35%,100%{transform:translateX(330%) skewX(-20deg)}}
+@keyframes bpNudge{50%{transform:translateX(4px)}}
+#bp-sale-popup .bp-later{display:block;width:100%;min-height:40px;margin-top:4px;padding:6px;border:0;background:none;cursor:pointer;appearance:none;font-family:inherit;font-size:14px;font-weight:500;color:var(--mu);text-decoration:underline;text-underline-offset:3px}
+@media (max-width:480px){#bp-sale-popup{padding:12px}#bp-sale-popup .bp-card{padding:12px 16px 10px;border-radius:22px}#bp-sale-popup h2{font-size:22px}#bp-sale-popup h2 span{font-size:28px}#bp-sale-popup .bp-numw{font-size:72px}#bp-sale-popup .bp-post b{font-size:24px}#bp-sale-popup .bp-post small{font-size:14px}#bp-sale-popup .bp-scene{height:136px;margin:-8px -8px 0}#bp-sale-popup .bp-bags{transform:scale(.9)}#bp-sale-popup .bp-ribbon{font-size:17px}}
+@media (prefers-reduced-motion:reduce){#bp-sale-popup,#bp-sale-popup *,#bp-sale-popup *::after{animation:none!important;transition:none!important}}
+</style>
+<div class="bp-card" role="dialog" aria-modal="true" aria-labelledby="bp-sale-title" aria-describedby="bp-sale-desc">
+  <div class="bp-head bp-anim" style="--d:.06s">
+    {%- if settings.logo != blank -%}
+    <img class="bp-logo" src="{{ settings.logo | image_url: width: 320 }}" alt="{{ shop.name | escape }}" width="{{ 28 | times: settings.logo.aspect_ratio | round }}" height="28" decoding="async">
+    {%- else -%}
+    <span class="bp-brand">{{ shop.name | escape }}</span>
+    {%- endif -%}
+    <button type="button" class="bp-close" aria-label="পপআপ বন্ধ করুন"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+  </div>
+
+  <h2 id="bp-sale-title" class="bp-anim" style="--d:.14s"><span>১১ – ১৪ নভেম্বর</span> চলছে শপিং উৎসব!</h2>
+
+  <div id="bp-sale-desc" class="bp-price bp-anim" style="--d:.22s">
+    <span class="bp-numw"><span class="bp-num">৬০%</span><span class="bp-glint" aria-hidden="true"><b>৬০%</b></span></span>
+    <span class="bp-post"><b>পর্যন্ত ছাড়</b><small>পছন্দের পণ্যে</small></span>
+  </div>
+
+  <div class="bp-scene bp-anim" style="--d:.3s" aria-hidden="true">
+    <svg class="bp-defs"><defs>
+      <linearGradient id="bpShade" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".24"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></linearGradient>
+      <symbol id="bpBag" viewBox="0 0 80 92">
+        <path d="M30 20C30 2 62 2 62 20" fill="none" style="stroke:var(--bh)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M8 26l14-8h52l-14 8z" style="fill:var(--bi)"/>
+        <path d="M60 26l14-8v60l-14 8z" style="fill:var(--bs)"/>
+        <path d="M60 26l14-8v5l-14 8z" fill="#000" fill-opacity=".1"/>
+        <rect x="8" y="26" width="52" height="60" rx="2" style="fill:var(--bf)"/>
+        <rect x="8" y="26" width="52" height="60" rx="2" fill="url(#bpShade)"/>
+        <path d="M8 31.5h52" stroke="#000" stroke-opacity=".12"/>
+        <circle cx="20" cy="30" r="1.6" fill="#000" fill-opacity=".3"/><circle cx="48" cy="30" r="1.6" fill="#000" fill-opacity=".3"/>
+        <path d="M20 29C20 8 48 8 48 29" fill="none" style="stroke:var(--bh)" stroke-width="3.2" stroke-linecap="round"/>
+      </symbol>
+    </defs></svg>
+
+    <i class="bp-rays"></i>
+    <span class="bp-spark" style="left:9%;top:22px;font-size:16px">✦</span>
+    <span class="bp-spark" style="right:10%;top:16px;font-size:12px;animation-delay:1.1s">✦</span>
+    <span class="bp-spark" style="left:22%;top:60px;font-size:9px;animation-delay:2s">✦</span>
+
+    <span class="bp-conf">
+      <i style="left:6%;background:#e0b45e;--dx:14px;--rt:300deg;animation-duration:3.2s;animation-delay:-.2s"></i>
+      <i style="left:15%;background:#a22f30;--dx:-10px;--rt:-260deg;animation-duration:2.7s;animation-delay:-1.4s"></i>
+      <i style="left:24%;background:#ffcd29;--dx:8px;animation-duration:3.4s;animation-delay:-2.3s"></i>
+      <i style="left:34%;background:#e23b44;--dx:-14px;--rt:280deg;animation-duration:2.9s;animation-delay:-.9s"></i>
+      <i style="left:44%;background:#c9a35c;--dx:10px;--rt:-320deg;animation-duration:3.1s;animation-delay:-1.9s"></i>
+      <i style="left:55%;background:#682536;--dx:-8px;animation-duration:3.3s;animation-delay:-.5s"></i>
+      <i style="left:65%;background:#ffcd29;--dx:12px;--rt:-300deg;animation-duration:2.8s;animation-delay:-2.6s"></i>
+      <i style="left:75%;background:#e23b44;--dx:-12px;--rt:340deg;animation-duration:3.2s;animation-delay:-1.1s"></i>
+      <i style="left:85%;background:#e0b45e;--dx:9px;animation-duration:2.9s;animation-delay:-2s"></i>
+      <i style="left:93%;background:#a22f30;--dx:-9px;--rt:-280deg;animation-duration:3.4s;animation-delay:-.7s"></i>
+    </span>
+
+    <span class="bp-bags">
+      <i class="bp-shad" style="left:14px;width:78px"></i><i class="bp-shad" style="left:84px;width:100px"></i><i class="bp-shad" style="right:6px;width:78px"></i>
+      <span class="bp-bag bp-b1"><span class="bp-bag-in"><svg viewBox="0 0 80 92" style="--bf:#e0b45e;--bs:#b8914a;--bi:#7d5f27;--bh:#682536"><use href="#bpBag"/><rect x="8" y="62" width="52" height="5" fill="#682536" fill-opacity=".85"/></svg></span></span>
+      <span class="bp-bag bp-b3"><span class="bp-bag-in"><svg viewBox="0 0 80 92" style="--bf:#fff8ec;--bs:#e3d2b6;--bi:#c9ad80;--bh:#a22f30"><use href="#bpBag"/><path d="M34 66c-6-4.6-10-7.6-10-11.4a4.6 4.6 0 0 1 10-1.6 4.6 4.6 0 0 1 10 1.6c0 3.8-4 6.8-10 11.4z" fill="#e23b44"/></svg></span></span>
+      <span class="bp-bag bp-b2"><span class="bp-bag-in"><svg viewBox="0 0 80 92" style="--bf:#a8394a;--bs:#6a2030;--bi:#4e1a28;--bh:#c9a35c"><use href="#bpBag"/><rect x="8" y="57" width="52" height="4" fill="#c9a35c"/><text x="34" y="76" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="9.5" font-weight="700" fill="#fff">BongoPiran</text></svg>
+        <span class="bp-tag"><svg viewBox="0 0 38 54"><path d="M19 0v9" stroke="#8a6a2f" stroke-width="1.2"/><path d="M7 14l12-8 12 8v34a4 4 0 0 1-4 4H11a4 4 0 0 1-4-4z" fill="#e23b44"/><path d="M7 14l12-8 12 8v4l-12-8-12 8z" fill="#fff" fill-opacity=".2"/><circle cx="19" cy="13" r="2.4" fill="#fffaf2"/><text x="19" y="33" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">৬০%</text><text x="19" y="45" text-anchor="middle" font-size="9.5" font-weight="700" fill="#ffe36e">ছাড়</text></svg></span>
+      </span></span>
+    </span>
+  </div>
+
+  <div class="bp-ribbon-wrap bp-anim" style="--d:.4s">
+    <div class="bp-ribbon">
+      <span class="bp-clock" aria-hidden="true"><i class="bp-hh"></i><i class="bp-mm"></i></span>
+      <span class="bp-r-days">আর মাত্র <b class="bp-dd">৪</b> দিন বাকি!</span>
+      <span class="bp-r-time" hidden>আর মাত্র <b class="bp-cd">০০:০০:০০</b> বাকি</span>
+    </div>
+  </div>
+
+  <button type="button" class="bp-cta bp-anim" style="--d:.48s">অর্ডার করুন এখনই <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <button type="button" class="bp-later bp-anim" style="--d:.54s">না, ধন্যবাদ</button>
+</div>
+</div>
+</template>
+
+<script>
+(function () {
+  /* ===== দরকার হলে শুধু এই লাইনগুলো বদলান ===== */
+  var DELAY_SEC = 2;                                         // সাইটে ঢোকার কত সেকেন্ড পরে popup আসবে
+  var OFFER_STARTS = new Date('2026-11-11T00:00:00+06:00');  // অফার শুরু (১১ নভেম্বর রাত ১২টা)
+  var OFFER_ENDS = new Date('2026-11-15T00:00:00+06:00');    // অফার শেষ (১৪ নভেম্বর রাত ১২টা পার হলে)
+  var STORAGE_KEY = 'bp-nov2026-sale60-dismissed';           // নতুন অফারে নাম বদলালে আবার সবাই দেখবে
+  var FONT_URL = 'https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@500;700&display=swap'; // popup খুললে তবেই লোড হয়
+  /* ============================================ */
+
+  var tpl = document.getElementById('bp-sale-tpl');
+  if (!tpl || !tpl.content) return;
+  // লিংকের শেষে ?bp-preview দিলে তারিখ বা আগে বন্ধ করা যাই হোক, popup দেখা যাবে (শুধু দেখার জন্য)
+  var preview = /[?&]bp-preview\b/.test(location.search);
+  var now = Date.now();
+  if (!preview) {
+    if (now < OFFER_STARTS || now >= OFFER_ENDS) return;
+    try { if (sessionStorage.getItem(STORAGE_KEY)) return; } catch (e) {}
+  }
+
+  // পেজ খোলার মুহূর্ত থেকে গুনে DELAY_SEC সেকেন্ড পরে (পুরো লোডের জন্য অপেক্ষা নয়)
+  var since = window.performance && performance.now ? performance.now() : 0;
+  setTimeout(show, Math.max(0, DELAY_SEC * 1000 - since));
+
+  function remember() { if (!preview) { try { sessionStorage.setItem(STORAGE_KEY, '1'); } catch (e) {} } }
+  function bnDigits(s) { return String(s).replace(/\d/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; }); }
+  function two(n) { return bnDigits(String(n).padStart(2, '0')); }
+
+  function show() {
+    if (document.getElementById('bp-sale-popup')) return;
+    if (FONT_URL && !document.querySelector('link[href*="Hind+Siliguri"]')) {
+      var font = document.createElement('link');
+      font.rel = 'stylesheet';
+      font.href = FONT_URL;
+      font.media = 'print';
+      font.onload = function () { font.media = 'all'; };
+      document.head.appendChild(font);
+    }
+
+    // popup-এর HTML/CSS শুধু এখনই পেজে আসে — আগে পেজের কোনো কাজে লাগে না
+    document.body.appendChild(tpl.content.cloneNode(true));
+    var popup = document.getElementById('bp-sale-popup');
+    var closeBtn = popup.querySelector('.bp-close');
+    var cta = popup.querySelector('.bp-cta');
+    var later = popup.querySelector('.bp-later');
+    var logo = popup.querySelector('.bp-logo');
+    var daysBox = popup.querySelector('.bp-r-days');
+    var timeBox = popup.querySelector('.bp-r-time');
+    var dd = popup.querySelector('.bp-dd');
+    var cd = popup.querySelector('.bp-cd');
+    var focusables = [closeBtn, cta, later];
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var prevFocus = document.activeElement;
+    var prevOverflow = document.body.style.overflow;
+    var closed = false, timerId;
+
+    if (logo) logo.addEventListener('error', function () { logo.remove(); });
+
+    // আসল সময় গুনে: ১ দিনের বেশি বাকি থাকলে "আর মাত্র ৩ দিন বাকি!", শেষ দিনে ঘণ্টা:মিনিট:সেকেন্ড
+    function tick() {
+      var diff = OFFER_ENDS - Date.now();
+      if (diff <= 0) { if (!preview) close(); return; }
+      var lastDay = diff < 86400000;
+      if (daysBox.hidden !== lastDay) { daysBox.hidden = lastDay; timeBox.hidden = !lastDay; }
+      var text = lastDay
+        ? two(Math.floor(diff / 3600000)) + ':' + two(Math.floor(diff / 60000) % 60) + ':' + two(Math.floor(diff / 1000) % 60)
+        : bnDigits(Math.ceil(diff / 86400000));
+      var el = lastDay ? cd : dd;
+      if (el.textContent !== text) el.textContent = text;
+    }
+    tick();
+    timerId = setInterval(tick, 1000);
+
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        var i = focusables.indexOf(document.activeElement);
+        focusables[(i + (e.shiftKey ? -1 : 1) + focusables.length) % focusables.length].focus();
+      }
+    }
+
+    function close() {
+      if (closed) return;
+      closed = true;
+      clearInterval(timerId);
+      remember();
+      document.removeEventListener('keydown', onKey);
+      popup.classList.remove('is-open');
+      setTimeout(function () {
+        popup.remove();
+        document.body.style.overflow = prevOverflow;
+        if (prevFocus && prevFocus.isConnected && prevFocus.focus) prevFocus.focus({ preventScroll: true });
+      }, reduceMotion ? 0 : 380);
+    }
+
+    closeBtn.addEventListener('click', close);
+    later.addEventListener('click', close);
+    cta.addEventListener('click', close);
+    popup.addEventListener('click', function (e) { if (e.target === popup) close(); });
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    closeBtn.focus({ preventScroll: true });
+    requestAnimationFrame(function () { requestAnimationFrame(function () { popup.classList.add('is-open'); }); });
+  }
+})();
+</script>
+{%- endunless -%}
